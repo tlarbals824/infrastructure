@@ -1,11 +1,9 @@
 name: Terraform Apply
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-    types:
-      - closed
 
 env:
   TF_VAR_tenancy_ocid: ${{ secrets.OCI_CLI_TENANCY }}
@@ -20,7 +18,6 @@ jobs:
   apply:
     name: Apply
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
 
     steps:
       - name: Checkout
