@@ -5,3 +5,4 @@ provider "oci" {
   private_key  = var.private_key
   region       = "ap-chuncheon-1"
 }
+워
