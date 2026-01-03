@@ -47,3 +47,9 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "kubernetes_version" {
+  description = "Kubernetes version for OKE cluster"
+  type        = string
+  default     = "v1.30.1"
+}
