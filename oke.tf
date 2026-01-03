@@ -57,4 +57,10 @@ resource "oci_containerengine_node_pool" "arm" {
     key   = "arch"
     value = "arm64"
   }
+
+  node_pool_cycling_details {
+    is_node_cycling_enabled = true
+    maximum_surge           = "1"
+    maximum_unavailable     = "0"
+  }
 }
