@@ -1,7 +1,7 @@
 name: Terraform Apply
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -31,5 +31,5 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+      - name: Terraform Plan
+        run: terraform plan -no-color
