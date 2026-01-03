@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - main
+    types:
+      - closed
 
 env:
   TF_VAR_tenancy_ocid: ${{ secrets.OCI_CLI_TENANCY }}
@@ -18,6 +20,7 @@ jobs:
   apply:
     name: Apply
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
 
     steps:
       - name: Checkout
@@ -31,5 +34,5 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Plan
-        run: terraform plan -no-color
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
