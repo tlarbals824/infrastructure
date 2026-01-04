@@ -58,3 +58,34 @@ resource "oci_containerengine_node_pool" "arm" {
     value = "arm64"
   }
 }
+
+resource "oci_containerengine_node_pool" "amd" {
+  cluster_id         = oci_containerengine_cluster.k8s.id
+  compartment_id     = var.compartment_ocid
+  kubernetes_version = var.kubernetes_version
+  name               = "${var.project_name}-amd-pool"
+  node_shape         = "VM.Standard.E2.1.Micro"
+
+  node_config_details {
+    placement_configs {
+      availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+      subnet_id           = oci_core_subnet.workers.id
+    }
+    size = 2
+  }
+
+  node_source_details {
+    image_id    = data.oci_core_images.amd.images[0].id
+    source_type = "IMAGE"
+  }
+
+  initial_node_labels {
+    key   = "arch"
+    value = "amd64"
+  }
+
+  initial_node_labels {
+    key   = "workload"
+    value = "lightweight"
+  }
+}
