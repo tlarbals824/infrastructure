@@ -35,6 +35,36 @@ spec:
   project: default
 
   source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.17.2
+    helm:
+      values: |
+        crds:
+          enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-cert-manager-issuers
+  namespace: argocd
+  finalizers:
+    - argoproj.io/resources-finalizer
+spec:
+  project: default
+
+  source:
     repoURL: https://github.com/tlarbals824/infrastructure.git
     targetRevision: main
     path: k8s/infra/cert-manager
@@ -61,9 +91,15 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/tlarbals824/infrastructure.git
-    targetRevision: main
-    path: k8s/infra/ingress-nginx
+    repoURL: https://kubernetes.github.io/ingress-nginx
+    chart: ingress-nginx
+    targetRevision: 4.12.2
+    helm:
+      values: |
+        controller:
+          service:
+            annotations:
+              oci.oraclecloud.com/load-balancer-type: "nlb"
 
   destination:
     server: https://kubernetes.default.svc
