@@ -160,6 +160,16 @@ resource "oci_core_security_list" "workers" {
       code = 4
     }
   }
+
+  # NLB NodePort 트래픽 허용 (HTTP/HTTPS)
+  ingress_security_rules {
+    protocol = "6"
+    source   = "0.0.0.0/0"
+    tcp_options {
+      min = 30000
+      max = 32767
+    }
+  }
 }
 
 resource "oci_core_security_list" "lb" {
