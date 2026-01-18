@@ -4,7 +4,7 @@ metadata:
   name: infra-argocd
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - argoproj.io/resources-finalizer
 spec:
   project: default
 
@@ -30,7 +30,7 @@ metadata:
   name: infra-cert-manager
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - argoproj.io/resources-finalizer
 spec:
   project: default
 
@@ -56,7 +56,7 @@ metadata:
   name: infra-ingress-nginx
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - argoproj.io/resources-finalizer
 spec:
   project: default
 
