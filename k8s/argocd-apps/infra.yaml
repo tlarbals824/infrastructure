@@ -100,7 +100,7 @@ spec:
           service:
             annotations:
               oci.oraclecloud.com/load-balancer-type: "nlb"
-              oci.oraclecloud.com/reserved-ips: "ocid1.publicip.oc1.ap-chuncheon-1.amaaaaaa3eqs7oyaiinxz7hvq2ngl4ysdkufxdu3lo4d5conwfqmzzm5auoq"
+              oci.oraclecloud.com/reserved-ips: "134.185.104.125"
 
   destination:
     server: https://kubernetes.default.svc
