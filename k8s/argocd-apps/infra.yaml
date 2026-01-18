@@ -97,6 +97,12 @@ spec:
     helm:
       values: |
         controller:
+          replicaCount: 2
+          updateStrategy:
+            type: RollingUpdate
+            rollingUpdate:
+              maxUnavailable: 1
+          minAvailable: 1
           service:
             loadBalancerIP: "134.185.104.125"
             annotations:
