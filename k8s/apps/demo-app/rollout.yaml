@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: demo-app
-          image: docker.io/library/nginx:1.25
+          image: docker.io/library/nginx:1.29.4
           ports:
             - containerPort: 80
           resources:
