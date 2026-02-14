@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openclaw-ingress
+  namespace: openclaw
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Basic Auth
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: openclaw-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    # Rate Limiting - 5 burst 허용 후 차단 (1 rps 기준)
+    nginx.ingress.kubernetes.io/limit-rps: "1"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+    nginx.ingress.kubernetes.io/limit-req-status-code: "429"
+    # IP ban - 5회 실패 시 일시 차단 (분당 5회 제한)
+    nginx.ingress.kubernetes.io/server-snippet: |
+      limit_req_zone $binary_remote_addr zone=openclaw_auth:10m rate=5r/m;
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      limit_req zone=openclaw_auth burst=5 nodelay;
+      limit_req_status 429;
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - openclaw.simproject.kr
+      secretName: openclaw-tls
+  rules:
+    - host: openclaw.simproject.kr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: openclaw
+                port:
+                  number: 18789

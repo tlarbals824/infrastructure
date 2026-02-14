@@ -15,6 +15,10 @@ spec:
     helm:
       values: |
         config:
+          gateway:
+            auth:
+              mode: password
+              password: "${OPENCLAW_GATEWAY_PASSWORD}"
           agents:
             defaults:
               model:
