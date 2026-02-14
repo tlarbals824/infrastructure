@@ -19,7 +19,9 @@ spec:
         env:
           TZ: Asia/Seoul
 
-        existingSecret: openclaw-secret
+        envFrom:
+          - secretRef:
+              name: openclaw-secret
 
         config:
           agents:
@@ -40,6 +42,9 @@ spec:
 
         chromium:
           enabled: true
+          image:
+            repository: docker.io/zenika/alpine-chrome
+            tag: "124"
 
   destination:
     server: https://kubernetes.default.svc
