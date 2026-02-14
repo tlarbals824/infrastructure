@@ -59,9 +59,10 @@ spec:
                           cfg.agents.defaults = cfg.agents.defaults || {};
                           cfg.agents.defaults.model = cfg.agents.defaults.model || {};
                           cfg.agents.defaults.model.primary = 'openai-codex/gpt-5.3-codex';
+                          if (cfg.agents.list && cfg.agents.list.length > 0) { cfg.agents.list[0].model = 'openai-codex/gpt-5.3-codex'; }
                           fs.writeFileSync('/home/node/.openclaw/openclaw.json', JSON.stringify(cfg, null, 2));
                           console.log('[patch-trusted-proxies] Updated trustedProxies:', ips);
-                          console.log('[patch-trusted-proxies] Set primary model: openai-codex/gpt-5.3-codex');
+                          console.log('[patch-trusted-proxies] Set primary/main model: openai-codex/gpt-5.3-codex');
                         });
                       }).on('error', (e) => {
                         console.error('[patch-trusted-proxies] Failed:', e.message);
