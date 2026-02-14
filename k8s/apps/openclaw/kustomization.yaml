@@ -5,3 +5,4 @@ resources:
   - sealedsecret.yaml
   - sealedsecret-basic-auth.yaml
   - ingress.yaml
+  - rbac.yaml

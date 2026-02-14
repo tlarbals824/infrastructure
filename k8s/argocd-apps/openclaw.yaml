@@ -14,24 +14,58 @@ spec:
     targetRevision: 1.3.14
     helm:
       values: |
-        config:
-          gateway:
-            auth:
-              mode: password
-              password: "${OPENCLAW_GATEWAY_PASSWORD}"
-            trustedProxies:
-              - "10.244.0.0/16"
-          agents:
-            defaults:
-              model:
-                primary: "openai-codex/gpt-5.3-codex"
-
         chromium:
           enabled: true
 
         app-template:
+          serviceAccount:
+            create: false
           controllers:
             main:
+              pod:
+                serviceAccountName: openclaw
+              initContainers:
+                patch-trusted-proxies:
+                  image:
+                    repository: ghcr.io/openclaw/openclaw
+                    tag: "2026.2.12"
+                  dependsOn:
+                    - init-config
+                  command:
+                    - node
+                    - -e
+                    - |
+                      const https = require('https');
+                      const fs = require('fs');
+                      const token = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token', 'utf8');
+                      const ca = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt');
+                      const opts = {
+                        hostname: 'kubernetes.default.svc',
+                        path: '/api/v1/namespaces/ingress-nginx/pods?labelSelector=app.kubernetes.io/component=controller',
+                        headers: { Authorization: 'Bearer ' + token },
+                        ca: ca
+                      };
+                      https.get(opts, (res) => {
+                        let data = '';
+                        res.on('data', (c) => data += c);
+                        res.on('end', () => {
+                          const pods = JSON.parse(data);
+                          const ips = pods.items.map(p => p.status.podIP).filter(Boolean);
+                          const cfg = JSON.parse(fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8'));
+                          cfg.gateway = cfg.gateway || {};
+                          cfg.gateway.trustedProxies = ips;
+                          fs.writeFileSync('/home/node/.openclaw/openclaw.json', JSON.stringify(cfg, null, 2));
+                          console.log('[patch-trusted-proxies] Updated trustedProxies:', ips);
+                        });
+                      }).on('error', (e) => {
+                        console.error('[patch-trusted-proxies] Failed:', e.message);
+                        process.exit(1);
+                      });
+                  volumeMounts:
+                    - mountPath: /home/node/.openclaw
+                      name: data
+                    - mountPath: /tmp
+                      name: tmp
               containers:
                 main:
                   env:
