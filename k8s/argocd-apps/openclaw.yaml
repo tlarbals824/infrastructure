@@ -20,33 +20,23 @@ spec:
               model:
                 primary: "openai-codex/gpt-5.3-codex"
 
-        controllers:
-          main:
-            containers:
-              main:
-                env:
-                  TZ: Asia/Seoul
-                envFrom:
-                  - secretRef:
-                      name: openclaw-secret
-              chromium:
-                image:
-                  repository: docker.io/zenika/alpine-chrome
-                  tag: "124"
-
-        service:
-          type: ClusterIP
-          port: 18789
-
-        persistence:
-          enabled: true
-          size: 5Gi
-
-        networkPolicy:
-          enabled: true
-
         chromium:
           enabled: true
+
+        app-template:
+          controllers:
+            main:
+              containers:
+                main:
+                  env:
+                    TZ: Asia/Seoul
+                  envFrom:
+                    - secretRef:
+                        name: openclaw-secret
+                chromium:
+                  image:
+                    repository: docker.io/zenika/alpine-chrome
+                    tag: "124"
 
   destination:
     server: https://kubernetes.default.svc
