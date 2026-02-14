@@ -158,7 +158,7 @@ spec:
               readOnly: true
           extraInitContainers:
             - name: init-crowdsec-bouncer
-              image: index.docker.io/crowdsecurity/lua-bouncer-plugin:v1.0.8
+              image: index.docker.io/crowdsecurity/lua-bouncer-plugin:v1.1.2
               env:
                 - name: API_URL
                   value: "http://crowdsec-service.crowdsec.svc.cluster.local:8080"
