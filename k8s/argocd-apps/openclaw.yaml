@@ -27,25 +27,27 @@ spec:
               initContainers:
                 setup-python:
                   image:
-                    repository: docker.io/python
-                    tag: "3.11-slim"
+                    repository: ghcr.io/openclaw/openclaw
+                    tag: "2026.2.12"
                   dependsOn:
                     - init-config
                   command:
                     - python3
                     - -c
                     - |
-                      import os, subprocess
-                      venv_dir = '/home/node/.openclaw/python'
+                      import os, subprocess, urllib.request
+                      pkg_dir = '/home/node/.openclaw/python'
                       scripts_dir = '/home/node/.openclaw/scripts'
+                      os.makedirs(pkg_dir, exist_ok=True)
                       os.makedirs(scripts_dir, exist_ok=True)
-                      pip_bin = os.path.join(venv_dir, 'bin', 'pip')
-                      if not os.path.isfile(pip_bin):
-                          print('[setup-python] Creating venv with pip...')
-                          subprocess.run(['python3', '-m', 'venv', venv_dir], check=True)
-                          print('[setup-python] venv created')
+                      pip_marker = os.path.join(pkg_dir, 'pip')
+                      if not os.path.isdir(pip_marker):
+                          print('[setup-python] Installing pip...')
+                          urllib.request.urlretrieve('https://bootstrap.pypa.io/get-pip.py', '/tmp/get-pip.py')
+                          subprocess.run(['python3', '/tmp/get-pip.py', '--target', pkg_dir, '-q'], check=True)
+                          print('[setup-python] pip installed')
                       else:
-                          print('[setup-python] venv already exists, skipping')
+                          print('[setup-python] pip already installed, skipping')
                       print('[setup-python] Setup complete')
                 patch-trusted-proxies:
                   image:
@@ -94,9 +96,7 @@ spec:
                 main:
                   env:
                     TZ: Asia/Seoul
-                    VIRTUAL_ENV: /home/node/.openclaw/python
-                    PYTHONPATH: /home/node/.openclaw/python/lib/python3.11/site-packages
-                    PATH: /home/node/.openclaw/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+                    PYTHONPATH: /home/node/.openclaw/python
                   envFrom:
                     - secretRef:
                         name: openclaw-secret
