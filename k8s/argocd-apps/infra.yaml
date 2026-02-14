@@ -134,12 +134,48 @@ spec:
     helm:
       values: |
         controller:
+          # CrowdSec Lua bouncer 지원 이미지 (mainline v1.12+에서 Lua 제거됨)
+          image:
+            repository: crowdsecurity/controller
+            tag: v1.13.2
+            digest: sha256:4575be24781cad35f8e58437db6a3f492df2a3167fed2b6759a6ff0dc3488d56
           replicaCount: 2
           updateStrategy:
             type: RollingUpdate
             rollingUpdate:
               maxUnavailable: 1
           minAvailable: 1
+          config:
+            lua-shared-dicts: "crowdsec_cache: 50m"
+            plugins: "crowdsec"
+          extraVolumes:
+            - name: crowdsec-bouncer-plugin
+              emptyDir: {}
+          extraVolumeMounts:
+            - name: crowdsec-bouncer-plugin
+              mountPath: /etc/nginx/lua/plugins/crowdsec
+              readOnly: true
+          extraInitContainers:
+            - name: init-crowdsec-bouncer
+              image: crowdsecurity/lua-bouncer-plugin:v1.0.8
+              env:
+                - name: API_URL
+                  value: "http://crowdsec-service.crowdsec.svc.cluster.local:8080"
+                - name: API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: crowdsec-bouncer-key
+                      key: BOUNCER_KEY
+                - name: BOUNCER_CONFIG
+                  value: "/crowdsec/crowdsec-bouncer.conf"
+                - name: BAN_TEMPLATE_PATH
+                  value: "/etc/nginx/lua/plugins/crowdsec/templates/ban.html"
+                - name: CAPTCHA_TEMPLATE_PATH
+                  value: "/etc/nginx/lua/plugins/crowdsec/templates/captcha.html"
+              command: ["sh", "-c", "sh /docker_start.sh && cp -R /crowdsec/* /lua_plugins/crowdsec/"]
+              volumeMounts:
+                - name: crowdsec-bouncer-plugin
+                  mountPath: /lua_plugins/crowdsec
           service:
             loadBalancerIP: "134.185.104.125"
             annotations:
@@ -148,6 +184,98 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-crowdsec
+  namespace: argocd
+  finalizers:
+    - argoproj.io/resources-finalizer
+spec:
+  project: default
+
+  source:
+    repoURL: https://crowdsecurity.github.io/helm-charts
+    chart: crowdsec
+    targetRevision: 0.22.0
+    helm:
+      values: |
+        container_runtime: containerd
+
+        lapi:
+          env:
+            - name: BOUNCER_KEY_ingress
+              value: "${CROWDSEC_BOUNCER_KEY}"
+          persistentVolume:
+            data:
+              enabled: true
+              size: 1Gi
+            config:
+              enabled: true
+              size: 100Mi
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
+        agent:
+          acquisition:
+            - namespace: ingress-nginx
+              podName: ingress-nginx-controller-*
+              program: nginx
+          env:
+            - name: COLLECTIONS
+              value: "crowdsecurity/nginx"
+            - name: PARSERS
+              value: "crowdsecurity/nginx-logs"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crowdsec
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-crowdsec-config
+  namespace: argocd
+  finalizers:
+    - argoproj.io/resources-finalizer
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/tlarbals824/infrastructure.git
+    targetRevision: main
+    path: k8s/infra/crowdsec
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crowdsec
 
   syncPolicy:
     automated:

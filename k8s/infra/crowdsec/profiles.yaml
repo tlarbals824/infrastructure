@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crowdsec-profiles
+  namespace: crowdsec
+data:
+  profiles.yaml: |
+    name: permanent_ban_on_http_bf
+    filters:
+      - Alert.Remediation == true && Alert.GetScenario() contains "http"
+    decisions:
+      - type: ban
+        # 10년 = 영구 차단
+        duration: 87600h
+    on_success: break

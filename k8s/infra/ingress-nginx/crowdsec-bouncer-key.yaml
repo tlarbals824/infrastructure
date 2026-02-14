@@ -1,0 +1,27 @@
+# CrowdSec bouncer API key for ingress-nginx
+#
+# 1. Deploy CrowdSec first, then generate the bouncer key:
+#    kubectl -n crowdsec exec deploy/crowdsec-lapi -- cscli bouncers add ingress-nginx
+#
+# 2. Seal the key:
+#    kubectl create secret generic crowdsec-bouncer-key \
+#      -n ingress-nginx \
+#      --from-literal=BOUNCER_KEY=<generated-key> \
+#      --dry-run=client -o yaml | \
+#      kubeseal --controller-name=sealed-secrets-controller \
+#               --controller-namespace=kube-system \
+#               --format yaml > k8s/infra/ingress-nginx/crowdsec-bouncer-key.yaml
+#
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: crowdsec-bouncer-key
+  namespace: ingress-nginx
+spec:
+  encryptedData:
+    BOUNCER_KEY: "<REPLACE_WITH_SEALED_VALUE>"
+  template:
+    metadata:
+      name: crowdsec-bouncer-key
+      namespace: ingress-nginx
+    type: Opaque

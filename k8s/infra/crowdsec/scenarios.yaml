@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crowdsec-scenarios
+  namespace: crowdsec
+data:
+  http-bf-permanent.yaml: |
+    type: leaky
+    name: custom/http-bf-permanent
+    description: "Detect HTTP brute force and trigger permanent ban after 5 failures"
+    filter: "evt.Meta.log_type == 'http_access-log' && evt.Meta.http_status in ['401', '403']"
+    groupby: "evt.Meta.source_ip"
+    capacity: 4
+    leakspeed: "10m"
+    blackhole: "1h"
+    labels:
+      service: http
+      type: bruteforce
+      remediation: true
