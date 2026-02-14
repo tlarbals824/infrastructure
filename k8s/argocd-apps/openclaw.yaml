@@ -18,12 +18,10 @@ spec:
           enabled: true
 
         app-template:
-          serviceAccount:
-            create: false
+          defaultPodOptions:
+            serviceAccountName: openclaw
           controllers:
             main:
-              pod:
-                serviceAccountName: openclaw
               initContainers:
                 patch-trusted-proxies:
                   image:
@@ -61,11 +59,6 @@ spec:
                         console.error('[patch-trusted-proxies] Failed:', e.message);
                         process.exit(1);
                       });
-                  volumeMounts:
-                    - mountPath: /home/node/.openclaw
-                      name: data
-                    - mountPath: /tmp
-                      name: tmp
               containers:
                 main:
                   env:
@@ -77,6 +70,17 @@ spec:
                   image:
                     repository: docker.io/zenika/alpine-chrome
                     tag: "124"
+          persistence:
+            data:
+              advancedMounts:
+                main:
+                  patch-trusted-proxies:
+                    - path: /home/node/.openclaw
+            tmp:
+              advancedMounts:
+                main:
+                  patch-trusted-proxies:
+                    - path: /tmp
 
   destination:
     server: https://kubernetes.default.svc
