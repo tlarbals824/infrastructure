@@ -35,20 +35,17 @@ spec:
                     - python3
                     - -c
                     - |
-                      import os, subprocess, urllib.request
-                      python_home = '/home/node/.openclaw/python'
+                      import os, subprocess, venv
+                      venv_dir = '/home/node/.openclaw/python'
                       scripts_dir = '/home/node/.openclaw/scripts'
-                      os.makedirs(python_home, exist_ok=True)
                       os.makedirs(scripts_dir, exist_ok=True)
-                      os.environ['PYTHONUSERBASE'] = python_home
-                      pip_check = os.path.join(python_home, 'lib')
-                      if not os.path.isdir(pip_check):
-                          print('[setup-python] Installing pip...')
-                          urllib.request.urlretrieve('https://bootstrap.pypa.io/get-pip.py', '/tmp/get-pip.py')
-                          subprocess.run(['python3', '/tmp/get-pip.py', '--user', '-q'], check=True)
-                          print('[setup-python] pip installed')
+                      pip_bin = os.path.join(venv_dir, 'bin', 'pip')
+                      if not os.path.isfile(pip_bin):
+                          print('[setup-python] Creating venv with pip...')
+                          venv.create(venv_dir, with_pip=True, clear=True)
+                          print('[setup-python] venv created')
                       else:
-                          print('[setup-python] pip already installed, skipping')
+                          print('[setup-python] venv already exists, skipping')
                       print('[setup-python] Setup complete')
                 patch-trusted-proxies:
                   image:
@@ -97,8 +94,9 @@ spec:
                 main:
                   env:
                     TZ: Asia/Seoul
-                    PYTHONUSERBASE: /home/node/.openclaw/python
+                    VIRTUAL_ENV: /home/node/.openclaw/python
                     PYTHONPATH: /home/node/.openclaw/python/lib/python3.11/site-packages
+                    PATH: /home/node/.openclaw/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
                   envFrom:
                     - secretRef:
                         name: openclaw-secret
