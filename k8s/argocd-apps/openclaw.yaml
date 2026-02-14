@@ -1,0 +1,79 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openclaw
+  namespace: argocd
+  finalizers:
+    - argoproj.io/resources-finalizer
+spec:
+  project: default
+
+  source:
+    repoURL: https://serhanekicii.github.io/openclaw-helm
+    chart: openclaw
+    targetRevision: 1.3.14
+    helm:
+      values: |
+        replicaCount: 1
+
+        env:
+          TZ: Asia/Seoul
+
+        existingSecret: openclaw-secret
+
+        config:
+          agents:
+            defaults:
+              model:
+                primary: "openai-codex/gpt-5.3-codex"
+
+        service:
+          type: ClusterIP
+          port: 18789
+
+        persistence:
+          enabled: true
+          size: 5Gi
+
+        networkPolicy:
+          enabled: true
+
+        chromium:
+          enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openclaw
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openclaw-secrets
+  namespace: argocd
+  finalizers:
+    - argoproj.io/resources-finalizer
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/tlarbals824/infrastructure.git
+    targetRevision: main
+    path: k8s/apps/openclaw
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openclaw
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
