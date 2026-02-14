@@ -136,7 +136,8 @@ spec:
         controller:
           # CrowdSec Lua bouncer 지원 이미지 (mainline v1.12+에서 Lua 제거됨)
           image:
-            repository: docker.io/crowdsecurity/controller
+            registry: docker.io
+            image: crowdsecurity/controller
             tag: v1.13.2
             digest: sha256:4575be24781cad35f8e58437db6a3f492df2a3167fed2b6759a6ff0dc3488d56
           replicaCount: 2
@@ -157,7 +158,7 @@ spec:
               readOnly: true
           extraInitContainers:
             - name: init-crowdsec-bouncer
-              image: docker.io/crowdsecurity/lua-bouncer-plugin:v1.0.8
+              image: index.docker.io/crowdsecurity/lua-bouncer-plugin:v1.0.8
               env:
                 - name: API_URL
                   value: "http://crowdsec-service.crowdsec.svc.cluster.local:8080"
