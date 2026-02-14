@@ -74,11 +74,17 @@ spec:
                     tag: "124"
           persistence:
             data:
+              type: persistentVolumeClaim
+              size: 5Gi
+              accessMode: ReadWriteOnce
               advancedMounts:
                 main:
                   patch-trusted-proxies:
                     - path: /home/node/.openclaw
+                  main:
+                    - path: /home/node/.openclaw
             tmp:
+              type: emptyDir
               advancedMounts:
                 main:
                   patch-trusted-proxies:
