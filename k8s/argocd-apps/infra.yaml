@@ -212,8 +212,7 @@ spec:
         container_runtime: containerd
 
         image:
-          registry: docker.io
-          repository: crowdsecurity/crowdsec
+          repository: docker.io/crowdsecurity/crowdsec
 
         lapi:
           env:
