@@ -19,6 +19,8 @@ spec:
             auth:
               mode: password
               password: "${OPENCLAW_GATEWAY_PASSWORD}"
+            trustedProxies:
+              - "10.244.0.0/16"
           agents:
             defaults:
               model:

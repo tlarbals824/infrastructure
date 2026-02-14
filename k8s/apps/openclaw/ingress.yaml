@@ -9,6 +9,9 @@ metadata:
     nginx.ingress.kubernetes.io/auth-type: basic
     nginx.ingress.kubernetes.io/auth-secret: openclaw-basic-auth
     nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    # WebSocket
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     # Rate Limiting - CrowdSec이 영구 차단 담당, 기본 rate limit만 유지
     nginx.ingress.kubernetes.io/limit-rps: "5"
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
