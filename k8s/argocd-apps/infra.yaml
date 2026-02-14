@@ -211,6 +211,10 @@ spec:
       values: |
         container_runtime: containerd
 
+        image:
+          registry: docker.io
+          repository: crowdsecurity/crowdsec
+
         lapi:
           env:
             - name: BOUNCER_KEY_ingress
