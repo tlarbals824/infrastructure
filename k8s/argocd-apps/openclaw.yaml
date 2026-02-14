@@ -51,8 +51,8 @@ spec:
                         res.on('end', () => {
                           const pods = JSON.parse(data);
                           const ips = pods.items.map(p => p.status.podIP).filter(Boolean);
-                          const raw = fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/,\s*([\]}])/g, '$1');
-                          const cfg = JSON.parse(raw);
+                          const raw = fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8');
+                          const cfg = (new Function('return (' + raw + ')'))();
                           cfg.gateway = cfg.gateway || {};
                           cfg.gateway.trustedProxies = ips;
                           fs.writeFileSync('/home/node/.openclaw/openclaw.json', JSON.stringify(cfg, null, 2));
