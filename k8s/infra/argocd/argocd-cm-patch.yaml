@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: argocd-cm
 data:
+  accounts.tlarbals824: apiKey, login
+  accounts.tlarbals824.enabled: "true"
   extension.config: |
     extensions:
       - name: argo-rollouts
