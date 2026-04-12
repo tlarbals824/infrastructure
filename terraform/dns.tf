@@ -23,9 +23,13 @@ resource "oci_dns_rrset" "n8n" {
   rtype           = "A"
 
   items {
-    domain = "n8n.${local.domain_name}"
+    domain = "n8n.${local.domain_name}."
     rdata  = local.nlb_ip
     rtype  = "A"
     ttl    = 300
+  }
+
+  lifecycle {
+    ignore_changes = [items]
   }
 }
