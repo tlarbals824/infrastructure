@@ -12,24 +12,3 @@ data "oci_dns_zones" "simproject_kr" {
   name           = local.domain_name
   zone_type      = "PRIMARY"
 }
-
-# =============================================================================
-# DNS A Records
-# =============================================================================
-
-resource "oci_dns_rrset" "n8n" {
-  zone_name_or_id = data.oci_dns_zones.simproject_kr.zones[0].id
-  domain          = "n8n.${local.domain_name}"
-  rtype           = "A"
-
-  items {
-    domain = "n8n.${local.domain_name}."
-    rdata  = local.nlb_ip
-    rtype  = "A"
-    ttl    = 300
-  }
-
-  lifecycle {
-    ignore_changes = [items]
-  }
-}
