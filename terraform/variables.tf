@@ -51,5 +51,11 @@ variable "common_tags" {
 variable "kubernetes_version" {
   description = "Kubernetes version for OKE cluster"
   type        = string
-  default     = "v1.34.1"
+  default     = "v1.35.2"
+}
+
+variable "oke_minimum_image_build" {
+  description = "Minimum OKE Oracle Linux 8 worker image build. Kubernetes 1.35 requires cgroups v2, which OKE OL8 images enable by default starting at build 1367."
+  type        = number
+  default     = 1367
 }
