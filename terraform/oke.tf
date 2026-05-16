@@ -49,8 +49,15 @@ resource "oci_containerengine_node_pool" "arm" {
   }
 
   node_source_details {
-    image_id    = data.oci_core_images.arm.images[0].id
+    image_id    = local.oke_arm_worker_image_id
     source_type = "IMAGE"
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(local.compatible_oke_arm_worker_images) > 0
+      error_message = "No compatible OKE Oracle Linux 8 aarch64 worker image found for the configured Kubernetes version and minimum image build."
+    }
   }
 
   initial_node_labels {
