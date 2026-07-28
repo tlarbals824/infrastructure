@@ -6,6 +6,10 @@ terraform {
       source  = "oracle/oci"
       version = ">=7.22.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 
   backend "s3" {

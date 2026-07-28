@@ -1,5 +1,5 @@
 # =============================================================================
-# OCI DNS - simproject.kr 도메인 관리
+# Cloudflare DNS - simproject.kr 도메인 관리
 # =============================================================================
 
 locals {
@@ -7,8 +7,15 @@ locals {
   domain_name = "simproject.kr"
 }
 
-data "oci_dns_zones" "simproject_kr" {
-  compartment_id = var.compartment_ocid
-  name           = local.domain_name
-  zone_type      = "PRIMARY"
+# =============================================================================
+# DNS Records
+# =============================================================================
+
+resource "cloudflare_record" "argocd" {
+  zone_id = var.cloudflare_zone_id
+  name    = "argocd"
+  content = local.nlb_ip
+  type    = "A"
+  proxied = true
+  ttl     = 1
 }
