@@ -51,30 +51,23 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -out=tfplan
+        run: terraform plan -no-color -out=tfplan 2>&1 | tee /tmp/tfplan-output.txt
         continue-on-error: true
 
       - name: Comment Plan on PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
+            const fs = require('fs');
             const outcome = '${{ steps.plan.outcome }}';
-            const stdout = `${{ steps.plan.outputs.stdout }}`;
-            const stderr = `${{ steps.plan.outputs.stderr }}`;
-            
+            const planOutput = fs.readFileSync('/tmp/tfplan-output.txt', 'utf8') || '';
+            const truncatedOutput = planOutput.slice(0, 60000);
+
             let body;
             if (outcome === 'success') {
-              body = `#### ✅ Terraform Plan
-            \`\`\`
-            ${stdout}
-            \`\`\`
-            *Pushed by: @${{ github.actor }}*`;
+              body = `#### Terraform Plan\n\`\`\`\n${truncatedOutput}\n\`\`\`\n*Pushed by: @${{ github.actor }}*`;
             } else {
-              body = `#### ❌ Terraform Plan Failed
-            \`\`\`
-            ${stderr || stdout}
-            \`\`\`
-            *Pushed by: @${{ github.actor }}*`;
+              body = `#### Terraform Plan Failed\n\`\`\`\n${truncatedOutput}\n\`\`\`\n*Pushed by: @${{ github.actor }}*`;
             }
 
             github.rest.issues.createComment({
