@@ -7,6 +7,7 @@ resources:
   - namespace.yaml
   - https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
   - ingress.yaml
+  - sealed-secret-cloudflare-access.yaml
 
 patches:
   - path: argocd-cm-patch.yaml
@@ -31,7 +32,7 @@ patches:
     patch: |-
       - op: replace
         path: /spec/replicas
-        value: 0
+        value: 1
   - target:
       kind: Deployment
       name: argocd-notifications-controller

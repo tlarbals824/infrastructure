@@ -3,6 +3,15 @@
 # =============================================================================
 
 # =============================================================================
+# Service Token for ArgoCD Dex OIDC
+# =============================================================================
+
+resource "cloudflare_access_service_token" "argocd_dex" {
+  account_id = var.cloudflare_account_id
+  name       = "argocd-dex"
+}
+
+# =============================================================================
 # ArgoCD Access Application
 # =============================================================================
 
@@ -22,7 +31,8 @@ resource "cloudflare_access_policy" "argocd" {
   decision       = "allow"
 
   include {
-    email = var.cloudflare_allowed_emails
+    email         = var.cloudflare_allowed_emails
+    service_token = [cloudflare_access_service_token.argocd_dex.id]
   }
 }
 
