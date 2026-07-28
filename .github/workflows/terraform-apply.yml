@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'terraform/**'
-  workflow_dispatch:
 
 env:
   TF_VAR_tenancy_ocid: ${{ secrets.OCI_CLI_TENANCY }}
@@ -39,54 +38,6 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-
-      - name: Import existing Cloudflare resources
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          api_base="https://api.cloudflare.com/client/v4"
-          zone_id="${TF_VAR_cloudflare_zone_id}"
-          account_id="${TF_VAR_cloudflare_account_id}"
-          auth_header="Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
-
-          app_response="$(mktemp)"
-          curl --fail --silent --show-error \
-            -H "${auth_header}" \
-            -H "Content-Type: application/json" \
-            "${api_base}/zones/${zone_id}/access/apps?per_page=100" > "${app_response}"
-
-          app_id="$(jq -r '.result[] | select(.name == "ArgoCD" and .domain == "argocd.simproject.kr") | .id' "${app_response}" | head -n 1)"
-          test -n "${app_id}" && test "${app_id}" != "null"
-
-          if ! terraform state list | grep -Fxq 'cloudflare_access_application.argocd'; then
-            terraform import "cloudflare_access_application.argocd" "${account_id}/${app_id}"
-          fi
-
-          dns_response="$(mktemp)"
-          curl --fail --silent --show-error \
-            -H "${auth_header}" \
-            -H "Content-Type: application/json" \
-            "${api_base}/zones/${zone_id}/dns_records?type=A&name=argocd.simproject.kr&per_page=100" > "${dns_response}"
-
-          record_id="$(jq -r '.result[] | .id' "${dns_response}" | head -n 1)"
-          test -n "${record_id}" && test "${record_id}" != "null"
-
-          if ! terraform state list | grep -Fxq 'cloudflare_record.argocd'; then
-            terraform import "cloudflare_record.argocd" "${zone_id}/${record_id}"
-          fi
-
-          policy_response="$(mktemp)"
-          curl --fail --silent --show-error \
-            -H "${auth_header}" \
-            -H "Content-Type: application/json" \
-            "${api_base}/zones/${zone_id}/access/apps/${app_id}/policies?per_page=100" > "${policy_response}"
-
-          policy_id="$(jq -r '.result[] | select(.name == "Personal Access") | .id' "${policy_response}" | head -n 1)"
-          if [ -n "${policy_id}" ] && [ "${policy_id}" != "null" ] && ! terraform state list | grep -Fxq 'cloudflare_access_policy.argocd'; then
-            terraform import "cloudflare_access_policy.argocd" "zone/${zone_id}/${app_id}/${policy_id}"
-          fi
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
