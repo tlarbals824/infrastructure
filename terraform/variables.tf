@@ -85,3 +85,9 @@ variable "cloudflare_allowed_emails" {
   type        = list(string)
   default     = ["srfsrf0103@gmail.com"]
 }
+
+variable "argo_dex_service_token_id" {
+  description = "Cloudflare Access Service Token ID for ArgoCD Dex OIDC integration"
+  type        = string
+  default     = "408d031f-508e-4668-9c88-9f832d37f546"
+}

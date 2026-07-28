@@ -23,6 +23,7 @@ resource "cloudflare_access_policy" "argocd" {
 
   include {
     email = var.cloudflare_allowed_emails
+    service_token = [var.argo_dex_service_token_id]
   }
 }
 
