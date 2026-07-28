@@ -11,3 +11,19 @@ data:
         backend:
           services:
             - url: http://infra-argo-rollouts-dashboard.argo-rollouts:3100/api/v1
+  url: https://argocd.simproject.kr
+  dex.config: |
+    connectors:
+      - type: oidc
+        id: cloudflare-access
+        name: Cloudflare Access
+        config:
+          issuer: https://throbbing-voice-6c89.cloudflareaccess.com
+          clientID: $argocd-cloudflare-access:clientID
+          clientSecret: $argocd-cloudflare-access:clientSecret
+          insecureEnableGroups: true
+          insecureSkipEmailVerified: true
+          scopes:
+            - openid
+            - profile
+            - email
