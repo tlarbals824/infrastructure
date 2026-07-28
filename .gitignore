@@ -17,3 +17,9 @@ terraform.tfvars
 
 # OS
 .DS_Store
+
+# Tool state
+.omc/
+.omx/
+.claude/
+auth
