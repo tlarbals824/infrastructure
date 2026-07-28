@@ -59,3 +59,29 @@ variable "oke_minimum_image_build" {
   type        = number
   default     = 1367
 }
+
+# =============================================================================
+# Cloudflare Variables
+# =============================================================================
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API Token"
+  type        = string
+  sensitive   = true
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID for simproject.kr"
+  type        = string
+}
+
+variable "cloudflare_account_id" {
+  description = "Cloudflare Account ID"
+  type        = string
+}
+
+variable "cloudflare_allowed_emails" {
+  description = "List of email addresses allowed to access services"
+  type        = list(string)
+  default     = ["srfsrf0103@gmail.com"]
+}

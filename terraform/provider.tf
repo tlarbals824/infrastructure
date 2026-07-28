@@ -5,3 +5,7 @@ provider "oci" {
   private_key  = var.private_key
   region       = "ap-chuncheon-1"
 }
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
