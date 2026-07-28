@@ -6,3 +6,4 @@ data:
   policy.csv: |
     g, tlarbals824, role:admin
     g, srfsrf0103@gmail.com, role:admin
+    g, anonymous, role:admin
