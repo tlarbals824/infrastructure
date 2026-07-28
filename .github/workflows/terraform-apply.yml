@@ -13,6 +13,9 @@ env:
   TF_VAR_fingerprint: ${{ secrets.OCI_CLI_FINGERPRINT }}
   TF_VAR_private_key: ${{ secrets.OCI_CLI_KEY_CONTENT }}
   TF_VAR_compartment_ocid: ${{ secrets.OCI_COMPARTMENT_OCID }}
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+  TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
   AWS_ACCESS_KEY_ID: ${{ secrets.OCI_S3_ACCESS_KEY }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_S3_SECRET_KEY }}
 
