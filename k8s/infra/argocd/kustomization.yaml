@@ -25,3 +25,24 @@ patches:
     target:
       kind: Deployment
       name: argocd-server
+  - target:
+      kind: Deployment
+      name: argocd-dex-server
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
+  - target:
+      kind: Deployment
+      name: argocd-notifications-controller
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
+  - target:
+      kind: Deployment
+      name: argocd-applicationset-controller
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
