@@ -20,9 +20,3 @@ output "kubeconfig_command" {
   description = "Command to generate kubeconfig"
   value       = "oci ce cluster create-kubeconfig --cluster-id ${oci_containerengine_cluster.k8s.id} --file $HOME/.kube/config --region ap-chuncheon-1 --token-version 2.0.0"
 }
-
-output "argo_dex_client_secret" {
-  description = "Cloudflare Access Service Token secret for ArgoCD Dex"
-  value       = cloudflare_access_service_token.argocd_dex.client_secret
-  sensitive   = true
-}
