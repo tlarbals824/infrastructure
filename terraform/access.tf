@@ -40,4 +40,3 @@ resource "cloudflare_zone_settings_override" "simproject_kr" {
     automatic_https_rewrites = "on"
   }
 }
-# retrigger apply
