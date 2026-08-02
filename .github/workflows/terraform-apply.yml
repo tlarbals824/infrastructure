@@ -39,5 +39,8 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Remove orphaned service token from state
+        run: terraform state rm cloudflare_access_service_token.argocd_dex || true
+
       - name: Terraform Apply
         run: terraform apply -auto-approve
