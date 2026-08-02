@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'terraform/**'
+  workflow_dispatch:
 
 env:
   TF_VAR_tenancy_ocid: ${{ secrets.OCI_CLI_TENANCY }}
