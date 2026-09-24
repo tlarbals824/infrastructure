@@ -8,7 +8,7 @@ spec:
       namespace: ingress-nginx
       sectionName: https-nuclio
   hostnames:
-    - nuclio.simproject.kr
+    - serverless.simproject.kr
   rules:
     - matches:
         - path:

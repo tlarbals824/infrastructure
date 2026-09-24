@@ -32,8 +32,8 @@ resource "cloudflare_access_policy" "argocd" {
 
 resource "cloudflare_access_application" "nuclio" {
   zone_id          = var.cloudflare_zone_id
-  name             = "Nuclio"
-  domain           = "nuclio.${local.domain_name}"
+  name             = "Serverless"
+  domain           = "serverless.${local.domain_name}"
   type             = "self_hosted"
   session_duration = "24h"
 }
@@ -59,8 +59,8 @@ resource "cloudflare_access_policy" "nuclio" {
 # 이 바이패스가 없으면 인증서 발급을 위해 Access 를 잠시 지워야 한다.
 locals {
   acme_challenge_hosts = {
-    argocd = "argocd.${local.domain_name}"
-    nuclio = "nuclio.${local.domain_name}"
+    argocd     = "argocd.${local.domain_name}"
+    serverless = "serverless.${local.domain_name}"
   }
 }
 

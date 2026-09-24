@@ -12,6 +12,11 @@ locals {
 # DNS Records
 # =============================================================================
 
+moved {
+  from = cloudflare_record.nuclio
+  to   = cloudflare_record.serverless
+}
+
 resource "cloudflare_record" "argocd" {
   zone_id = var.cloudflare_zone_id
   name    = "argocd"
@@ -21,9 +26,9 @@ resource "cloudflare_record" "argocd" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "nuclio" {
+resource "cloudflare_record" "serverless" {
   zone_id = var.cloudflare_zone_id
-  name    = "nuclio"
+  name    = "serverless"
   content = local.nlb_ip
   type    = "A"
   proxied = true
