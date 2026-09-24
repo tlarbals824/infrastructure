@@ -515,6 +515,14 @@ spec:
           registry:
             pushPullUrl: registry.crowdsec.svc.cluster.local:5000
 
+          # 노드는 arm64다. 기본값 gcr.io/iguazio/alpine:3.20 은 x86_64 루트fs라
+          # arm64 processor 가 "no such file or directory" 로 죽는다.
+          platform:
+            runtimeBaseImages:
+              golang: gcr.io/iguazio/arm64v8/alpine:3.20
+              shell: gcr.io/iguazio/arm64v8/alpine:3.20
+              nodejs: gcr.io/iguazio/arm64v8/node:20
+
           rbac:
             create: true
             crdAccessMode: namespaced
