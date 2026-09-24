@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: argocd-rbac-cm
 data:
+  # Cloudflare Access 를 통과한 뒤에는 Argo CD 로그인을 다시 묻지 않기 위한 설정이다.
+  # 안전하려면 오리진(NLB, NodePort)이 Cloudflare IP 만 받아야 한다.
   policy.csv: |
     g, tlarbals824, role:admin
     g, srfsrf0103@gmail.com, role:admin

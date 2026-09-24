@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    # nginx 가 Let's Encrypt 인증서로 TLS 를 종료하고, Argo CD 에는 HTTPS 로 다시 연결한다.
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   ingressClassName: nginx

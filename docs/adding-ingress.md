@@ -10,18 +10,25 @@
 
 ## 추가 절차
 
-### 1단계: OCI DNS에 A 레코드 추가
+### 1단계: Cloudflare DNS에 A 레코드 추가
 
-OCI 콘솔에서:
+`terraform/dns.tf`에 레코드를 추가합니다. 주소는 `local.nlb_ip`
+(`134.185.104.125`)이고, `proxied = true` 여야 Access와 오리진 제한이 적용됩니다.
 
+```hcl
+resource "cloudflare_record" "app" {
+  zone_id = var.cloudflare_zone_id
+  name    = "app"
+  content = local.nlb_ip
+  type    = "A"
+  proxied = true
+  ttl     = 1
+}
 ```
-Networking → DNS Management → simproject.kr Zone
-→ Add Record:
-   - Type: A
-   - Name: <subdomain>  (예: app, api, dashboard)
-   - Address: 158.179.174.184  (NLB IP)
-   - TTL: 300
-```
+
+로그인이 필요한 서비스면 `terraform/access.tf`에 Access 애플리케이션을 추가하고,
+같은 호스트를 `acme_challenge_hosts`에 넣습니다. ACME 경로 바이패스가 없으면
+Let's Encrypt HTTP-01이 Access 로그인에 막혀 인증서가 갱신되지 않습니다.
 
 ### 2단계: Ingress 리소스 생성
 
@@ -55,9 +62,8 @@ spec:
 
 ### 3단계: 적용
 
-```bash
-kubectl apply -f ingress.yaml
-```
+Ingress 매니페스트를 저장소에 커밋하고 `main`에 머지합니다. Argo CD가 자동으로 동기화합니다.
+Terraform 변경(DNS, Access)은 머지 후 GitHub Actions가 apply 합니다.
 
 ### 4단계: 확인
 
@@ -243,10 +249,11 @@ kubectl logs -n ingress-nginx deploy/ingress-nginx-controller
 
 새 Ingress 추가 시:
 
-- [ ] OCI DNS에 A 레코드 추가
+- [ ] `terraform/dns.tf`에 proxied A 레코드 추가 (`local.nlb_ip`)
+- [ ] 비공개 서비스면 Access 애플리케이션과 `acme_challenge_hosts` 추가
 - [ ] Ingress YAML 작성
 - [ ] `ingressClassName: nginx` 확인
 - [ ] `cert-manager.io/cluster-issuer: letsencrypt-prod` annotation 확인
-- [ ] `kubectl apply` 실행
+- [ ] `main` 머지 후 Argo CD 동기화와 Terraform apply 확인
 - [ ] `kubectl get certificate` 로 READY 확인
 - [ ] 브라우저에서 HTTPS 접속 테스트

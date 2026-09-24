@@ -10,6 +10,8 @@ data "oci_core_services" "all_services" {
   }
 }
 
+data "cloudflare_ip_ranges" "cloudflare" {}
+
 data "oci_containerengine_node_pool_option" "oke" {
   node_pool_option_id = "all"
   compartment_id      = var.compartment_ocid

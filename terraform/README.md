@@ -34,9 +34,13 @@ git checkout -b feature/your-change
 # Terraform 코드 수정
 vim terraform/xxx.tf
 
-# 포맷팅 확인
+# 포맷팅 확인. plan/apply 는 로컬에서 실행하지 않습니다.
 terraform fmt -check -recursive
 ```
+
+Provider 버전은 `terraform/.terraform.lock.hcl` 에 고정되어 있습니다.
+GitHub Actions 는 Terraform 1.10.3 과 `terraform init -lockfile=readonly` 를 사용합니다.
+제약을 바꾼 뒤에는 1.10.3 으로 `terraform init -backend=false` 를 실행해 lock 파일을 갱신하고 함께 커밋합니다.
 
 ### 2. PR 생성 및 머지
 

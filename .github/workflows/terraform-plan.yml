@@ -11,6 +11,10 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: terraform-state
+  cancel-in-progress: false
+
 env:
   TF_VAR_tenancy_ocid: ${{ secrets.OCI_CLI_TENANCY }}
   TF_VAR_user_ocid: ${{ secrets.OCI_CLI_USER }}
@@ -41,7 +45,7 @@ jobs:
           terraform_version: 1.10.3
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -lockfile=readonly
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
