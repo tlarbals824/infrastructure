@@ -367,7 +367,7 @@ spec:
             # subPath 할당을 제거할 때 CLEANUP_SUBPATH_DIRS=true 로 바꾸면,
             # lapi 기동 시 core-pvc 에 남은 서브디렉터리(config/, crowdsec/)를 자동으로 삭제한다.
             - name: cleanup-subpath-dirs
-              image: busybox:1.36
+              image: docker.io/library/busybox:1.36
               command: ["/bin/sh", "-c"]
               args:
                 - |
