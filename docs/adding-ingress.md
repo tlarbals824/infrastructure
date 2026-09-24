@@ -11,7 +11,7 @@
 
 ### 1단계: Cloudflare DNS에 A 레코드 추가
 
-`terraform/dns.tf`에 레코드를 추가합니다. 주소는 `local.nlb_ip`
+`terraform/dns.tf`의 `local.public_hosts`에 이름을 추가합니다. 주소는 `local.nlb_ip`
 (`134.185.104.125`)이고, `proxied = true` 여야 Access와 오리진 제한이 적용됩니다.
 
 ```hcl
@@ -31,8 +31,7 @@ Let's Encrypt HTTP-01이 Access 로그인에 막혀 인증서가 갱신되지 �
 
 ### 2단계: Gateway 리스너, 인증서, HTTPRoute
 
-공개 라우트는 `k8s/infra/ingress-nginx/gateway.yaml`의 `Gateway/public`에
-호스트 리스너를 추가합니다. 포트는 Traefik entrypoint인 `8443`입니다.
+쿠버네티스 쪽은 `k8s/edge/hosts/<이름>/` 폴더 하나가 리스너, 인증서, ReferenceGrant, HTTPRoute, CrowdSec Middleware를 만든다. 포트는 Traefik entrypoint인 `8443`입니다. 기존 예는 `hosts/argocd`와 `hosts/serverless`다.
 
 ```yaml
 - name: https-app
@@ -64,7 +63,7 @@ metadata:
 spec:
   parentRefs:
     - name: public
-      namespace: ingress-nginx
+      namespace: traefik
       sectionName: https-app
   hostnames:
     - app.simproject.kr
@@ -149,9 +148,9 @@ kubectl get endpoints -n <namespace>
 ### 호스트가 열리지 않음
 
 ```bash
-kubectl get gateway public -n ingress-nginx
+kubectl get gateway public -n traefik
 kubectl get httproute -n <namespace>
-kubectl logs -n ingress-nginx deploy/infra-traefik
+kubectl logs -n traefik deploy/infra-traefik
 ```
 
 **확인사항:**

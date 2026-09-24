@@ -7,12 +7,6 @@ resources:
   - namespace.yaml
   # stable 은 매 동기화마다 버전이 움직인다. 현재 stable 인 v3.5.3 에 고정한다.
   - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/install.yaml
-  - certificate.yaml
-  - reference-grant.yaml
-  - httproute.yaml
-
-components:
-  - ../../components/crowdsec-bouncer
 
 patches:
   - path: argocd-cm-patch.yaml

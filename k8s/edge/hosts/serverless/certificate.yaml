@@ -1,11 +1,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: argocd-server-tls
+  name: nuclio-tls
+  namespace: nuclio
 spec:
-  secretName: argocd-server-tls
+  secretName: nuclio-tls
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-    - argocd.simproject.kr
+    - serverless.simproject.kr

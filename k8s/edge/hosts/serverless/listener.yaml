@@ -1,0 +1,17 @@
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-serverless
+    protocol: HTTPS
+    port: 8443
+    hostname: serverless.simproject.kr
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: nuclio-tls
+          namespace: nuclio

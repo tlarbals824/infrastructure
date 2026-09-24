@@ -2,11 +2,12 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: ReferenceGrant
 metadata:
   name: allow-public-gateway-tls
+  namespace: nuclio
 spec:
   from:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      namespace: ingress-nginx
+      namespace: traefik
   to:
     - group: ""
       kind: Secret

@@ -1,0 +1,17 @@
+- op: add
+  path: /spec/listeners/-
+  value:
+    name: https-argocd
+    protocol: HTTPS
+    port: 8443
+    hostname: argocd.simproject.kr
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: argocd-server-tls
+          namespace: argocd
