@@ -18,7 +18,7 @@ OKE 클러스터의 Ingress 구조 및 TLS 인증서 관리 방법을 정리한 
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  nginx Ingress Controller                                       │
+│  Traefik                                                        │
 │  - L7 라우팅 (Host/Path 기반)                                    │
 │  - TLS 종료                                                     │
 │  - Namespace: ingress-nginx                                     │
@@ -53,11 +53,11 @@ spec:
   type: LoadBalancer
 ```
 
-**위치:** `k8s/argocd-apps/infra.yaml` 의 `infra-ingress-nginx` (`loadBalancerIP` 포함).
+**위치:** `k8s/argocd-apps/infra.yaml` 의 `infra-traefik` (`loadBalancerIP` 포함).
 
-### 2. nginx Ingress Controller
+### 2. Traefik
 
-L7 라우팅을 담당하는 Ingress Controller입니다.
+L7 라우팅을 담당하는 Ingress Controller입니다. ingress-nginx 유지보수가 끝나서 Traefik 3으로 바꿨습니다.
 
 **기능:**
 - Host 기반 라우팅 (예: argocd.simproject.kr)
@@ -65,7 +65,7 @@ L7 라우팅을 담당하는 Ingress Controller입니다.
 - TLS 종료
 - 리버스 프록시
 
-**위치:** 차트 값은 `k8s/argocd-apps/infra.yaml`, namespace 와 bouncer secret 은 `k8s/infra/ingress-nginx/`.
+**위치:** 차트 값은 `k8s/argocd-apps/infra.yaml` 의 `infra-traefik`. namespace, SealedSecret, CrowdSec Middleware 는 `k8s/infra/ingress-nginx/`. 네임스페이스 이름은 SealedSecret 범위 때문에 `ingress-nginx`로 둔다.
 
 ### 3. cert-manager
 
@@ -91,7 +91,7 @@ spec:
     solvers:
       - http01:
           ingress:
-            ingressClassName: nginx
+            ingressClassName: traefik
 ```
 
 **위치:** `k8s/infra/cert-manager/`
@@ -108,9 +108,9 @@ metadata:
   namespace: argocd
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - argocd.simproject.kr
@@ -148,7 +148,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - <subdomain>.simproject.kr
@@ -186,9 +186,9 @@ LB 서브넷에서 들어옵니다.
 
 **보안 참고:**
 - 워커 노드는 Private Subnet이라 공인 IP가 없다
-- 공개 트래픽은 Cloudflare → NLB → nginx 순서만 허용된다
+- 공개 트래픽은 Cloudflare → NLB → Traefik 순서만 허용된다
 - NLB에 오리진 IP로 직접 붙는 연결은 보안 리스트에서 거절된다
-- nginx 는 `CF-Connecting-IP` 를 실제 클라이언트 주소로 사용한다
+- Traefik 은 Cloudflare 대역의 `X-Forwarded-For` 와 `CF-Connecting-IP` 를 실제 클라이언트 주소로 사용한다
 
 ## 트러블슈팅
 
@@ -245,7 +245,7 @@ k8s/infra/
 
 ## 참고 링크
 
-- [nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
+- [Traefik](https://doc.traefik.io/traefik/)
 - [cert-manager 문서](https://cert-manager.io/docs/)
 - [Let's Encrypt](https://letsencrypt.org/)
 - [OCI Network Load Balancer](https://docs.oracle.com/en-us/iaas/Content/NetworkLoadBalancer/overview.htm)
