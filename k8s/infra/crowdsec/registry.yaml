@@ -121,7 +121,9 @@ spec:
               CONF="$CONF_DIR/99-cluster-registry.conf"
               HOSTS=/host/etc/hosts
               while true; do
-                ip=$(getent hosts "$HOST" | awk '{print $1; exit}')
+                # busybox has nslookup, not getent. The resolver line is
+                # "Address: <dns-ip>:53", so take the Address after Name.
+                ip=$(nslookup "$HOST" 2>/dev/null | awk '/^Name:/{found=1; next} found && /^Address:/{print $2; exit}')
                 if [ -z "$ip" ]; then
                   echo "waiting for $HOST"
                   sleep 5
