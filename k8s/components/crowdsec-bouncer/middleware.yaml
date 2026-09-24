@@ -13,7 +13,8 @@ spec:
       # LAPI 의 BOUNCER_KEY_ingress 와 같은 값이다. 키 이름은 SealedSecret 의 키.
       crowdsecLapiKeyFile: /etc/traefik/crowdsec/BOUNCER_KEY
       forwardedHeadersCustomName: CF-Connecting-IP
-      # https://www.cloudflare.com/ips-v4 (2026-09-24). Traefik entrypoint trustedIPs 와 같다.
+      # https://www.cloudflare.com/ips-v4 (2026-09-24).
+      # k8s/argocd-apps/infra.yaml 의 cloudflareIps 와 같은 목록이다.
       forwardedHeadersTrustedIps:
         - 173.245.48.0/20
         - 103.21.244.0/22
