@@ -1,15 +1,5 @@
 # 에이전트 지침
 
-## 컨테이너 이미지
+운영 중 반복된 실수는 [docs/README.md](docs/README.md)에 주제별로 있다. 이미지를 다루면 [docs/images.md](docs/images.md), 엣지나 인증서면 [docs/edge.md](docs/edge.md), 동기화와 Terraform이면 [docs/gitops.md](docs/gitops.md), 네임스페이스와 NLB면 [docs/cluster.md](docs/cluster.md)를 읽고 고친다.
 
-이 클러스터는 short name을 거부한다. `image:` 값에는 레지스트리 호스트를 항상 붙인다.
-
-- Docker Hub 공식 이미지: `docker.io/library/<name>:<tag>`
-- Docker Hub 그 외: `docker.io/<owner>/<name>:<tag>`
-- 그 외 레지스트리는 `quay.io/...`처럼 호스트를 그대로 적는다.
-
-`busybox:1.36`, `bitnami/kubectl:1.32.4`처럼 호스트가 없는 이름은 파드가 `ImageInspectError`로 뜨지 않는다. 태그도 그 레지스트리에 실제로 있는 값만 쓴다. 없는 태그는 `manifest unknown`으로 실패한다.
-
-## 함수 이미지 레지스트리
-
-Nuclio 대시보드에서 코드를 배포하면 Kaniko가 함수 이미지를 푸시한다. `registry.pushPullUrl` 이 비어 있으면 `nuclio/processor-<name>` 을 Docker Hub로 푸시하고 `UNAUTHORIZED` 로 실패한다. 푸시 대상은 `registry.crowdsec.svc.cluster.local:5000` 이다. 데이터는 `crowdsec` 네임스페이스의 `core-pvc` subPath `registry` 에 있고, LAPI와 같은 노드에 둔다. 워커 노드는 CoreDNS를 쓰지 않으므로 DaemonSet `registry-node-config` 가 그 이름을 `/etc/hosts` 에 넣고 CRI-O insecure registry로 등록한다.
+`image:`에는 레지스트리 호스트를 붙인다. 호스트가 없는 이름과 레지스트리에 없는 태그는 파드가 뜨지 않는다.

@@ -71,6 +71,8 @@ DaemonSet `registry-node-config` 가 적어 둔 insecure registry 설정으로 �
 
 ### 파드가 ImagePull/exec format error
 `quay.io/nuclio/*` 이미지를 `-arm64` 태그로 지정했는지 확인하세요.
+`exec /usr/local/bin/processor: no such file or directory` 는 아키텍처가 다른 메시지다.
+베이스 이미지가 x86_64 alpine이면 난다. [이미지](images.md)를 본다.
 
 ### 인증서 발급 확인
 ```bash
