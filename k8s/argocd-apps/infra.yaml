@@ -241,7 +241,7 @@ spec:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/name: traefik
-                app.kubernetes.io/instance: infra-traefik-traefik
+                app.kubernetes.io/instance: infra-traefik-edge
         service:
           annotations:
             oci.oraclecloud.com/load-balancer-type: "nlb"
@@ -252,7 +252,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: traefik
+    namespace: edge
 
   syncPolicy:
     automated:
@@ -278,7 +278,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: traefik
+    namespace: edge
 
   syncPolicy:
     automated:
@@ -354,7 +354,7 @@ spec:
 
         agent:
           acquisition:
-            - namespace: traefik
+            - namespace: edge
               podName: infra-traefik-*
               program: traefik
           env:
