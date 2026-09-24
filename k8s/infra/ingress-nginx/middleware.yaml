@@ -9,7 +9,7 @@ spec:
       enabled: true
       crowdsecMode: stream
       crowdsecLapiScheme: http
-      crowdsecLapiHost: crowdsec-service.crowdsec.svc.cluster.local:8080
+      crowdsecLapiHost: infra-crowdsec-service.crowdsec.svc.cluster.local:8080
       crowdsecLapiPath: /
       # LAPI 의 BOUNCER_KEY_ingress 와 같은 값이다. 키 이름은 SealedSecret 의 키.
       crowdsecLapiKeyFile: /etc/traefik/crowdsec/BOUNCER_KEY
