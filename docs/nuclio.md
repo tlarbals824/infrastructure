@@ -41,6 +41,8 @@ Nuclio Dashboard (코드 편집기 + 배포 + 테스트)
 
 - Terraform: `terraform/access.tf` 의 `cloudflare_access_application.nuclio`
 - 허용 이메일: `terraform/variables.tf` 의 `cloudflare_allowed_emails`
+- `/.well-known/acme-challenge/*` 는 `cloudflare_access_application.acme_challenge` 가
+  bypass 한다. 인증서 발급 때문에 Access 애플리케이션을 지우지 않는다.
 
 ## 주요 설정
 
@@ -52,10 +54,9 @@ Nuclio Dashboard (코드 편집기 + 배포 + 테스트)
 
 ## 함수 빌드 관련 참고
 
-Nuclio는 함수 이미지를 빌드하기 위해 docker daemon(kind: `docker`) 또는 kaniko를
-사용합니다. 기본값은 `containerBuilderKind: docker` 인데, OKE에는 별도 docker
-daemon이 없으므로 함수를 *배포*하려면 **kaniko** 또는 외부 레지스트리 구성을
-추가해야 합니다. (대시보드 UI 자체는 추가 설정 없이 사용 가능)
+Nuclio는 함수 이미지를 빌드하기 위해 docker daemon 또는 kaniko를 사용합니다.
+OKE에는 docker daemon이 없으므로 `k8s/argocd-apps/infra.yaml` 의
+`dashboard.containerBuilderKind` 는 `kaniko` 입니다.
 
 ## 트러블슈팅
 

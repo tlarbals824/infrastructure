@@ -3,6 +3,7 @@
 # =============================================================================
 
 locals {
+  # k8s/argocd-apps/infra.yaml 의 controller.service.loadBalancerIP 와 같아야 한다.
   nlb_ip      = "134.185.104.125"
   domain_name = "simproject.kr"
 }

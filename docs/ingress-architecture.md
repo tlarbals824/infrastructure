@@ -12,7 +12,7 @@ OKE 클러스터의 Ingress 구조 및 TLS 인증서 관리 방법을 정리한 
 │  OCI Network Load Balancer (NLB)                                │
 │  - L4 로드밸런서 (TCP/UDP)                                       │
 │  - Always Free Tier (무료)                                      │
-│  - Public IP: ...                                   │
+│  - Public IP: 134.185.104.125                                   │
 │  - 포트: 80 (HTTP), 443 (HTTPS)                                 │
 └─────────────────────────────────────────────────────────────────┘
                                │
@@ -53,7 +53,7 @@ spec:
   type: LoadBalancer
 ```
 
-**위치:** `k8s/infra/ingress-nginx/`
+**위치:** `k8s/argocd-apps/infra.yaml` 의 `infra-ingress-nginx` (`loadBalancerIP` 포함).
 
 ### 2. nginx Ingress Controller
 
@@ -65,7 +65,7 @@ L7 라우팅을 담당하는 Ingress Controller입니다.
 - TLS 종료
 - 리버스 프록시
 
-**위치:** `k8s/infra/ingress-nginx/`
+**위치:** 차트 값은 `k8s/argocd-apps/infra.yaml`, namespace 와 bouncer secret 은 `k8s/infra/ingress-nginx/`.
 
 ### 3. cert-manager
 
@@ -108,7 +108,6 @@ metadata:
   namespace: argocd
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   ingressClassName: nginx
@@ -135,12 +134,8 @@ spec:
 
 ### 1. DNS 레코드 추가
 
-OCI DNS에서 A 레코드 추가:
-```
-Type: A
-Name: <subdomain>
-Address: 158.179.174.184 (NLB IP)
-```
+Cloudflare DNS는 `terraform/dns.tf`에서 관리합니다. A 레코드는
+`local.nlb_ip`(134.185.104.125)를 가리키고 `proxied = true` 로 둡니다.
 
 ### 2. Ingress 리소스 생성
 
@@ -184,21 +179,16 @@ kubectl get certificate -n <namespace>
 NLB가 클라이언트 IP를 보존하므로, Worker 노드에서 NodePort 트래픽을 허용해야 합니다.
 
 **Terraform 설정** (`terraform/network.tf`):
-```hcl
-# NLB NodePort 트래픽 허용
-ingress_security_rules {
-  protocol = "6"              # TCP
-  source   = "0.0.0.0/0"
-  tcp_options {
-    min = 30000
-    max = 32767               # NodePort 범위
-  }
-}
-```
+
+NLB 리스너(80/443)와 워커 NodePort(30000-32767)는 `cloudflare_ip_ranges` 의
+IPv4 CIDR 만 허용합니다. NLB 헬스체크는 워커 보안 리스트의 `10.0.0.0/16` 규칙으로
+LB 서브넷에서 들어옵니다.
 
 **보안 참고:**
-- Worker 노드는 Private Subnet에 있어 외부에서 직접 접근 불가
-- 외부 트래픽은 반드시 NLB를 통해서만 Worker에 도달
+- 워커 노드는 Private Subnet이라 공인 IP가 없다
+- 공개 트래픽은 Cloudflare → NLB → nginx 순서만 허용된다
+- NLB에 오리진 IP로 직접 붙는 연결은 보안 리스트에서 거절된다
+- nginx 는 `CF-Connecting-IP` 를 실제 클라이언트 주소로 사용한다
 
 ## 트러블슈팅
 

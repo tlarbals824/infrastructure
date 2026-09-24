@@ -100,6 +100,7 @@ resource "oci_core_security_list" "api_endpoint" {
     }
   }
 
+  # API 엔드포인트는 퍼블릭이다. kubectl 을 쓰는 IP 가 정해지면 source 를 그 CIDR 로 좁힌다.
   ingress_security_rules {
     protocol = "6"
     source   = "0.0.0.0/0"
@@ -161,13 +162,25 @@ resource "oci_core_security_list" "workers" {
     }
   }
 
-  # NLB NodePort 트래픽 허용 (HTTP/HTTPS)
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 30000
-      max = 32767
+  # NLB 는 소스 IP 를 보존한다. 공개 HTTP 는 Cloudflare 를 통하므로 NodePort 는
+  # Cloudflare IPv4 만 연다. NLB 헬스체크는 위의 10.0.0.0/16 규칙으로 허용된다.
+  dynamic "ingress_security_rules" {
+    for_each = toset(data.cloudflare_ip_ranges.cloudflare.ipv4_cidr_blocks)
+    content {
+      description = "NodePort from Cloudflare"
+      protocol    = "6"
+      source      = ingress_security_rules.value
+      tcp_options {
+        min = 30000
+        max = 32767
+      }
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(data.cloudflare_ip_ranges.cloudflare.ipv4_cidr_blocks) > 0
+      error_message = "Cloudflare IPv4 range list is empty. Refusing to update the worker security list."
     }
   }
 }
@@ -182,21 +195,38 @@ resource "oci_core_security_list" "lb" {
     destination = "0.0.0.0/0"
   }
 
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 80
-      max = 80
+  # 리스너로 들어오는 공개 트래픽은 Cloudflare 엣지만 허용한다.
+  # 오리진 IP 로 직접 붙으면 Argo CD anonymous admin, Nuclio nop auth 를 우회할 수 있다.
+  dynamic "ingress_security_rules" {
+    for_each = toset(data.cloudflare_ip_ranges.cloudflare.ipv4_cidr_blocks)
+    content {
+      description = "HTTP from Cloudflare"
+      protocol    = "6"
+      source      = ingress_security_rules.value
+      tcp_options {
+        min = 80
+        max = 80
+      }
     }
   }
 
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 443
-      max = 443
+  dynamic "ingress_security_rules" {
+    for_each = toset(data.cloudflare_ip_ranges.cloudflare.ipv4_cidr_blocks)
+    content {
+      description = "HTTPS from Cloudflare"
+      protocol    = "6"
+      source      = ingress_security_rules.value
+      tcp_options {
+        min = 443
+        max = 443
+      }
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(data.cloudflare_ip_ranges.cloudflare.ipv4_cidr_blocks) > 0
+      error_message = "Cloudflare IPv4 range list is empty. Refusing to update the load balancer security list."
     }
   }
 }
