@@ -325,6 +325,7 @@ spec:
             # CONVENTION(관례): subPath 를 사용하면 반드시 이 init container 를 함께 유지한다.
             # subPath 할당을 제거할 때 CLEANUP_SUBPATH_DIRS=true 로 바꾸면,
             # lapi 기동 시 core-pvc 에 남은 서브디렉터리(config/, crowdsec/)를 자동으로 삭제한다.
+            # subPath registry 는 함수 이미지 레지스트리 데이터다. 여기서 지우지 않는다.
             - name: cleanup-subpath-dirs
               image: docker.io/library/busybox:1.36
               command: ["/bin/sh", "-c"]
@@ -492,7 +493,15 @@ spec:
             replicas: 1
             servicePort: 8070
             # OKE에 docker daemon이 없으므로 in-cluster 빌더(kaniko) 사용.
+            # pushPullUrl 이 비면 Kaniko가 Docker Hub nuclio/processor-<name> 으로 푸시하고
+            # UNAUTHORIZED 로 실패한다. 대상은 crowdsec/registry (core-pvc subPath registry).
             containerBuilderKind: kaniko
+            build:
+              insecurePushRegistry: true
+              initContainerImage:
+                busybox:
+                  repository: docker.io/library/busybox
+                  tag: "1.36"
             image:
               repository: quay.io/nuclio/dashboard
               tag: 1.15.27-arm64
@@ -502,6 +511,9 @@ spec:
               kind: nop
             ingress:
               enabled: false
+
+          registry:
+            pushPullUrl: registry.crowdsec.svc.cluster.local:5000
 
           rbac:
             create: true
