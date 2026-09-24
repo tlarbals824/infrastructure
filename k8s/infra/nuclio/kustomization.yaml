@@ -8,4 +8,3 @@ resources:
   - reference-grant.yaml
   - middleware.yaml
   - httproute.yaml
-  - drop-cert-ownerref.yaml
