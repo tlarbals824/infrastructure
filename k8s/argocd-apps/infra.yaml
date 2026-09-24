@@ -43,6 +43,8 @@ spec:
       values: |
         crds:
           enabled: true
+        extraArgs:
+          - --feature-gates=ExperimentalGatewayAPISupport=true
         resources:
           requests:
             cpu: 10m
@@ -159,8 +161,7 @@ spec:
     targetRevision: 41.6.0
     helm:
       values: |
-        # SealedSecret crowdsec-bouncer-key 가 ingress-nginx 네임스페이스에 묶여 있다.
-        # 키를 다시 봉인하지 않으려고 Traefik 도 같은 네임스페이스에 둔다.
+        # 바운서 키는 traefik 네임스페이스의 SealedSecret 이다.
         deployment:
           replicas: 2
         podDisruptionBudget:
@@ -240,7 +241,7 @@ spec:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/name: traefik
-                app.kubernetes.io/instance: infra-traefik-ingress-nginx
+                app.kubernetes.io/instance: infra-traefik-traefik
         service:
           annotations:
             oci.oraclecloud.com/load-balancer-type: "nlb"
@@ -251,7 +252,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: ingress-nginx
+    namespace: traefik
 
   syncPolicy:
     automated:
@@ -273,11 +274,11 @@ spec:
   source:
     repoURL: https://github.com/tlarbals824/infrastructure.git
     targetRevision: main
-    path: k8s/infra/ingress-nginx
+    path: k8s/edge
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: ingress-nginx
+    namespace: traefik
 
   syncPolicy:
     automated:
@@ -353,7 +354,7 @@ spec:
 
         agent:
           acquisition:
-            - namespace: ingress-nginx
+            - namespace: traefik
               podName: infra-traefik-*
               program: traefik
           env:
@@ -505,9 +506,6 @@ spec:
           rbac:
             create: true
             crdAccessMode: namespaced
-    - repoURL: https://github.com/tlarbals824/infrastructure.git
-      targetRevision: main
-      path: k8s/infra/nuclio
 
   destination:
     server: https://kubernetes.default.svc

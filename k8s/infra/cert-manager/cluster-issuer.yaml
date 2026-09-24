@@ -10,8 +10,12 @@ spec:
       name: letsencrypt-prod-account-key
     solvers:
       - http01:
-          ingress:
-            ingressClassName: traefik
+          gatewayHTTPRoute:
+            parentRefs:
+              - group: gateway.networking.k8s.io
+                kind: Gateway
+                name: public
+                namespace: traefik
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -26,5 +30,9 @@ spec:
       name: letsencrypt-staging-account-key
     solvers:
       - http01:
-          ingress:
-            ingressClassName: traefik
+          gatewayHTTPRoute:
+            parentRefs:
+              - group: gateway.networking.k8s.io
+                kind: Gateway
+                name: public
+                namespace: traefik

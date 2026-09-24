@@ -21,7 +21,7 @@ OKE 클러스터의 Ingress 구조 및 TLS 인증서 관리 방법을 정리한 
 │  Traefik                                                        │
 │  - L7 라우팅 (Host/Path 기반)                                    │
 │  - TLS 종료                                                     │
-│  - Namespace: ingress-nginx                                     │
+│  - Namespace: traefik                                           │
 └─────────────────────────────────────────────────────────────────┘
                                │
                                ▼
@@ -65,7 +65,7 @@ L7 라우팅을 담당하는 Ingress Controller입니다. ingress-nginx 유지�
 - TLS 종료
 - 리버스 프록시
 
-**위치:** 차트 값은 `k8s/argocd-apps/infra.yaml` 의 `infra-traefik`. namespace, SealedSecret, CrowdSec Middleware 는 `k8s/infra/ingress-nginx/`. 네임스페이스 이름은 SealedSecret 범위 때문에 `ingress-nginx`로 둔다.
+**위치:** 차트 값은 `k8s/argocd-apps/infra.yaml` 의 `infra-traefik`. Gateway, SealedSecret, 호스트 묶음은 `k8s/edge`.
 
 ### 3. cert-manager
 
@@ -109,7 +109,7 @@ metadata:
 spec:
   parentRefs:
     - name: public
-      namespace: ingress-nginx
+      namespace: traefik
       sectionName: https-argocd
   hostnames:
     - argocd.simproject.kr
@@ -119,7 +119,7 @@ spec:
           port: 80
 ```
 
-**위치:** `k8s/infra/argocd/httproute.yaml`, 리스너는 `k8s/infra/ingress-nginx/gateway.yaml`.
+**위치:** `k8s/edge/hosts/argocd`.
 
 ## 새 서비스 추가 방법
 
