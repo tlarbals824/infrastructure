@@ -35,3 +35,21 @@ jobs:
 
       - name: Lint CrowdSec subPath convention
         run: python scripts/lint_crowdsec_convention.py
+
+  nuclio-registry:
+    name: Nuclio registry convention
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Lint Nuclio registry convention
+        run: python scripts/lint_nuclio_registry.py

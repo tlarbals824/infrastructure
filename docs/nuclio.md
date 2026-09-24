@@ -49,14 +49,23 @@ Nuclio Dashboard (코드 편집기 + 배포 + 테스트)
 - **이미지 아키텍처**: OKE 노드가 arm64이므로 `quay.io/nuclio/{dashboard,controller}`
   이미지를 **`-arm64` 태그**(`1.15.27-arm64`)로 지정합니다. (기본값은 `-amd64`라
   arm64 노드에서 `exec format error` 발생)
-- **Ingress**: 차트 내장 `dashboard.ingress` 사용 + cert-manager TLS
+- **노출**: Gateway `public` 의 HTTPRoute `nuclio/dashboard`. 차트 내장 ingress는 꺼 둔다.
 - **RBAC**: `crdAccessMode: namespaced` (함수는 `nuclio` 네임스페이스 내 배포)
+- **함수 이미지**: `registry.pushPullUrl` 은 `registry.crowdsec.svc.cluster.local:5000`.
+  비우면 Kaniko가 Docker Hub로 푸시하다가 `UNAUTHORIZED` 로 실패한다.
 
 ## 함수 빌드 관련 참고
 
 Nuclio는 함수 이미지를 빌드하기 위해 docker daemon 또는 kaniko를 사용합니다.
 OKE에는 docker daemon이 없으므로 `k8s/argocd-apps/infra.yaml` 의
 `dashboard.containerBuilderKind` 는 `kaniko` 입니다.
+
+빌드 결과는 클러스터 안 레지스트리로 푸시합니다. Deployment `registry` 가
+`crowdsec` 네임스페이스의 `core-pvc` subPath `registry` 를 마운트하고,
+Service `registry:5000` 으로 받습니다. 레지스트리는 HTTP라서
+`dashboard.build.insecurePushRegistry` 가 켜져 있습니다. 워커의 CRI-O는
+DaemonSet `registry-node-config` 가 적어 둔 insecure registry 설정으로 같은
+주소를 pull 합니다.
 
 ## 트러블슈팅
 
@@ -70,5 +79,5 @@ kubectl get certificate -n nuclio
 
 ### DNS 레코드
 `serverless.simproject.kr` A 레코드는 `terraform/dns.tf`의
-`cloudflare_record.nuclio` 리소스로 관리됩니다.
+`cloudflare_record.public` (`local.public_hosts`) 로 관리됩니다.
 Terraform 적용 후 DNS 전파까지 수 분이 걸릴 수 있습니다.
