@@ -1,12 +1,11 @@
-# Ingress 추가 가이드
+# 호스트 추가 가이드
 
 새로운 서비스에 도메인을 연결하고 HTTPS를 적용하는 방법입니다.
 
 ## 사전 요구사항
 
-- Traefik Ingress Controller 설치됨
-- cert-manager 설치됨
-- letsencrypt-prod ClusterIssuer 생성됨
+- Traefik이 `Gateway/public`을 받고 있음
+- cert-manager와 `letsencrypt-prod` ClusterIssuer가 있음
 
 ## 추가 절차
 
@@ -30,229 +29,143 @@ resource "cloudflare_record" "app" {
 같은 호스트를 `acme_challenge_hosts`에 넣습니다. ACME 경로 바이패스가 없으면
 Let's Encrypt HTTP-01이 Access 로그인에 막혀 인증서가 갱신되지 않습니다.
 
-### 2단계: Ingress 리소스 생성
+### 2단계: Gateway 리스너, 인증서, HTTPRoute
+
+공개 라우트는 `k8s/infra/ingress-nginx/gateway.yaml`의 `Gateway/public`에
+호스트 리스너를 추가합니다. 포트는 Traefik entrypoint인 `8443`입니다.
 
 ```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: <service-name>-ingress
-  namespace: <namespace>
-  annotations:
-    # Let's Encrypt 인증서 자동 발급
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  ingressClassName: traefik
+- name: https-app
+  protocol: HTTPS
+  port: 8443
+  hostname: app.simproject.kr
+  allowedRoutes:
+    namespaces:
+      from: All
   tls:
-    - hosts:
-        - <subdomain>.simproject.kr
-      secretName: <service-name>-tls
-  rules:
-    - host: <subdomain>.simproject.kr
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: <service-name>
-                port:
-                  number: <port>
+    mode: Terminate
+    certificateRefs:
+      - group: ""
+        kind: Secret
+        name: app-tls
+        namespace: <namespace>
 ```
+
+서비스 네임스페이스에는 `Certificate`, Gateway가 Secret을 읽게 하는 `ReferenceGrant`,
+`HTTPRoute`를 둡니다. CrowdSec Middleware는 `k8s/components/crowdsec-bouncer`를
+그 kustomization의 component로 넣습니다.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app
+  namespace: <namespace>
+spec:
+  parentRefs:
+    - name: public
+      namespace: ingress-nginx
+      sectionName: https-app
+  hostnames:
+    - app.simproject.kr
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: bouncer
+      backendRefs:
+        - name: <service-name>
+          port: <port>
+```
+
+인증서는 Ingress annotation이 아니라 `Certificate`입니다. `dnsNames`에 같은 호스트를 넣습니다.
+cert-manager의 HTTP-01은 임시 Ingress를 만들므로 ClusterIssuer의 `ingressClassName: traefik`은 유지합니다.
 
 ### 3단계: 적용
 
-Ingress 매니페스트를 저장소에 커밋하고 `main`에 머지합니다. Argo CD가 자동으로 동기화합니다.
+매니페스트를 저장소에 커밋하고 `main`에 머지합니다. Argo CD가 자동으로 동기화합니다.
 Terraform 변경(DNS, Access)은 머지 후 GitHub Actions가 apply 합니다.
 
 ### 4단계: 확인
 
 ```bash
-# Ingress 상태 확인
-kubectl get ingress -n <namespace>
-
-# 인증서 발급 상태 확인
+kubectl get httproute -n <namespace>
 kubectl get certificate -n <namespace>
-
-# 인증서가 READY: True 될 때까지 대기 (1-2분 소요)
 ```
 
-## 예시
-
-### 예시 1: 웹 애플리케이션
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: webapp-ingress
-  namespace: production
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  ingressClassName: traefik
-  tls:
-    - hosts:
-        - app.simproject.kr
-      secretName: webapp-tls
-  rules:
-    - host: app.simproject.kr
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: webapp-service
-                port:
-                  number: 80
-```
-
-### 예시 2: API 서버
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: api-ingress
-  namespace: production
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.middlewares: ingress-nginx-bouncer@kubernetescrd
-spec:
-  ingressClassName: traefik
-  tls:
-    - hosts:
-        - api.simproject.kr
-      secretName: api-tls
-  rules:
-    - host: api.simproject.kr
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 8080
-```
-
-### 예시 3: 경로 기반 라우팅
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: multi-path-ingress
-  namespace: production
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  ingressClassName: traefik
-  tls:
-    - hosts:
-        - www.simproject.kr
-      secretName: www-tls
-  rules:
-    - host: www.simproject.kr
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 8080
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend-service
-                port:
-                  number: 80
-```
-
-## 자주 사용하는 Annotations
-
-| Annotation | 설명 | 예시 값 |
-|------------|------|---------|
-| `cert-manager.io/cluster-issuer` | 인증서 발급자 | `letsencrypt-prod` |
-| `traefik.ingress.kubernetes.io/router.middlewares` | CrowdSec 바운서 | `ingress-nginx-bouncer@kubernetescrd` |
-| `traefik.ingress.kubernetes.io/service.serversscheme` | 백엔드 스킴 | `https` |
-| `traefik.ingress.kubernetes.io/service.serverstransport` | 백엔드 TLS 설정 | `argocd-backend@kubernetescrd` |
-
-HTTP를 HTTPS로 돌리는 설정은 Ingress annotation이 아니라 Traefik `web` entrypoint에 있다. `/.well-known/acme-challenge/`는 `allowACMEByPass`로 리다이렉트를 통과한다.
+인증서가 `READY: True`가 되기까지 1-2분 걸립니다.
 
 ## 동작 원리
 
 ```
-1. Ingress 리소스 생성
+1. Gateway 리스너와 HTTPRoute 생성
         ↓
-2. Traefik이 Ingress를 자동 감지
+2. Traefik이 Gateway API를 감지해 라우터를 만든다
         ↓
-3. Traefik 라우터가 Host와 Path를 갱신
+3. Certificate가 발급 대상 호스트를 가진다
         ↓
-4. cert-manager가 TLS 설정 감지
+4. cert-manager가 HTTP-01로 Let's Encrypt에 요청한다
         ↓
-5. Let's Encrypt에서 인증서 자동 발급
+5. Secret에 인증서 저장
         ↓
-6. Secret에 인증서 저장
-        ↓
-7. HTTPS 트래픽 처리 시작
+6. Gateway 리스너가 그 Secret으로 HTTPS를 받는다
 ```
+
+HTTP를 HTTPS로 돌리는 설정은 Traefik `web` entrypoint에 있다. `/.well-known/acme-challenge/`는 `allowACMEByPass`로 리다이렉트를 통과한다.
 
 ## 트러블슈팅
 
 ### 인증서 발급 실패
 
 ```bash
-# Challenge 상태 확인
 kubectl get challenges -n <namespace>
-
-# 상세 정보 확인
 kubectl describe certificate <name> -n <namespace>
 ```
 
 **일반적인 원인:**
-- DNS 레코드 미설정 또는 전파 지연
-- 방화벽에서 80 포트 차단
-- ingressClassName 불일치
+
+- DNS 레코드가 없거나 아직 퍼지지 않음
+- Access가 ACME 경로를 막고 `acme_challenge_hosts`에 호스트가 없음
+- Gateway 리스너가 그 Secret을 가리키지 않음
 
 ### 502 Bad Gateway
 
 ```bash
-# 백엔드 서비스 확인
 kubectl get svc -n <namespace>
 kubectl get endpoints -n <namespace>
 ```
 
 **일반적인 원인:**
-- 백엔드 서비스/파드 미실행
-- 포트 번호 불일치
-- 백엔드 프로토콜 불일치 (HTTP vs HTTPS)
 
-### Ingress가 인식 안 됨
+- 백엔드 서비스나 파드가 없음
+- HTTPRoute의 포트가 Service 포트와 다름
+
+### 호스트가 열리지 않음
 
 ```bash
-# Ingress Controller 로그 확인
+kubectl get gateway public -n ingress-nginx
+kubectl get httproute -n <namespace>
 kubectl logs -n ingress-nginx deploy/infra-traefik
 ```
 
 **확인사항:**
-- `ingressClassName: traefik` 설정 확인
-- namespace 확인
+
+- HTTPRoute `parentRefs.sectionName`이 Gateway 리스너 이름과 같음
+- ReferenceGrant가 Gateway의 Secret 참조를 허용함
 
 ## 체크리스트
 
-새 Ingress 추가 시:
-
 - [ ] `terraform/dns.tf`에 proxied A 레코드 추가 (`local.nlb_ip`)
 - [ ] 비공개 서비스면 Access 애플리케이션과 `acme_challenge_hosts` 추가
-- [ ] Ingress YAML 작성
-- [ ] `ingressClassName: traefik` 확인
-- [ ] `cert-manager.io/cluster-issuer: letsencrypt-prod` annotation 확인
+- [ ] `Gateway/public`에 HTTPS 리스너 추가
+- [ ] `Certificate`, `ReferenceGrant`, `HTTPRoute` 추가
+- [ ] `k8s/components/crowdsec-bouncer` component 포함
 - [ ] `main` 머지 후 Argo CD 동기화와 Terraform apply 확인
 - [ ] `kubectl get certificate` 로 READY 확인
 - [ ] 브라우저에서 HTTPS 접속 테스트

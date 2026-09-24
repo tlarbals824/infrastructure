@@ -6,5 +6,7 @@ namespace: nuclio
 resources:
   - certificate.yaml
   - reference-grant.yaml
-  - middleware.yaml
   - httproute.yaml
+
+components:
+  - ../../components/crowdsec-bouncer

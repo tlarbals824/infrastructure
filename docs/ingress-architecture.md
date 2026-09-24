@@ -96,39 +96,30 @@ spec:
 
 **위치:** `k8s/infra/cert-manager/`
 
-## Ingress 리소스 예시
+## HTTPRoute 예시
 
-ArgoCD Ingress 설정:
+Argo CD는 Gateway에서 TLS를 끝내고 서버는 HTTP로 받습니다.
 
 ```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: argocd-server-ingress
+  name: argocd-server
   namespace: argocd
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
-  ingressClassName: traefik
-  tls:
-    - hosts:
-        - argocd.simproject.kr
-      secretName: argocd-server-tls
+  parentRefs:
+    - name: public
+      namespace: ingress-nginx
+      sectionName: https-argocd
+  hostnames:
+    - argocd.simproject.kr
   rules:
-    - host: argocd.simproject.kr
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 443
+    - backendRefs:
+        - name: argocd-server
+          port: 80
 ```
 
-**위치:** `k8s/infra/argocd/ingress.yaml`
+**위치:** `k8s/infra/argocd/httproute.yaml`, 리스너는 `k8s/infra/ingress-nginx/gateway.yaml`.
 
 ## 새 서비스 추가 방법
 
@@ -137,34 +128,10 @@ spec:
 Cloudflare DNS는 `terraform/dns.tf`에서 관리합니다. A 레코드는
 `local.nlb_ip`(134.185.104.125)를 가리키고 `proxied = true` 로 둡니다.
 
-### 2. Ingress 리소스 생성
+### 2. Gateway 리스너와 HTTPRoute
 
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-service-ingress
-  namespace: <namespace>
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-spec:
-  ingressClassName: traefik
-  tls:
-    - hosts:
-        - <subdomain>.simproject.kr
-      secretName: my-service-tls
-  rules:
-    - host: <subdomain>.simproject.kr
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: <service-name>
-                port:
-                  number: <port>
-```
+`Gateway/public`에 호스트 리스너를 추가하고, 서비스 네임스페이스에
+`Certificate`, `ReferenceGrant`, `HTTPRoute`를 둡니다. 백엔드 포트는 Service 포트를 그대로 씁니다.
 
 ### 3. 인증서 확인
 
