@@ -14,4 +14,4 @@
         - group: ""
           kind: Secret
           name: nuclio-tls
-          namespace: nuclio
+          namespace: serverless
