@@ -7,7 +7,7 @@ spec:
   from:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      namespace: traefik
+      namespace: edge
   to:
     - group: ""
       kind: Secret

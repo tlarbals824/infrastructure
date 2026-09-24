@@ -21,7 +21,7 @@ OKE 클러스터의 Ingress 구조 및 TLS 인증서 관리 방법을 정리한 
 │  Traefik                                                        │
 │  - L7 라우팅 (Host/Path 기반)                                    │
 │  - TLS 종료                                                     │
-│  - Namespace: traefik                                           │
+│  - Namespace: edge                                              │
 └─────────────────────────────────────────────────────────────────┘
                                │
                                ▼
@@ -109,7 +109,7 @@ metadata:
 spec:
   parentRefs:
     - name: public
-      namespace: traefik
+      namespace: edge
       sectionName: https-argocd
   hostnames:
     - argocd.simproject.kr

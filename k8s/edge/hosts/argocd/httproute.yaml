@@ -6,7 +6,7 @@ metadata:
 spec:
   parentRefs:
     - name: public
-      namespace: traefik
+      namespace: edge
       sectionName: https-argocd
   hostnames:
     - argocd.simproject.kr

@@ -63,7 +63,7 @@ metadata:
 spec:
   parentRefs:
     - name: public
-      namespace: traefik
+      namespace: edge
       sectionName: https-app
   hostnames:
     - app.simproject.kr
@@ -148,9 +148,9 @@ kubectl get endpoints -n <namespace>
 ### 호스트가 열리지 않음
 
 ```bash
-kubectl get gateway public -n traefik
+kubectl get gateway public -n edge
 kubectl get httproute -n <namespace>
-kubectl logs -n traefik deploy/infra-traefik
+kubectl logs -n edge deploy/infra-traefik
 ```
 
 **확인사항:**
