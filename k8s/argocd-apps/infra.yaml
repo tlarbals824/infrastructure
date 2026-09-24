@@ -207,7 +207,6 @@ spec:
         providers:
           kubernetesCRD:
             allowCrossNamespace: true
-            ingressClass: traefik
           kubernetesIngress:
             enabled: true
             ingressClass: traefik
