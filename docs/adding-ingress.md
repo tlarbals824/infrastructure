@@ -4,7 +4,7 @@
 
 ## 사전 요구사항
 
-- nginx Ingress Controller 설치됨
+- Traefik Ingress Controller 설치됨
 - cert-manager 설치됨
 - letsencrypt-prod ClusterIssuer 생성됨
 
@@ -42,7 +42,7 @@ metadata:
     # Let's Encrypt 인증서 자동 발급
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - <subdomain>.simproject.kr
@@ -90,7 +90,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - app.simproject.kr
@@ -118,10 +118,9 @@ metadata:
   namespace: production
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    # API 요청 body 크기 제한 증가
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    traefik.ingress.kubernetes.io/router.middlewares: ingress-nginx-bouncer@kubernetescrd
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - api.simproject.kr
@@ -150,7 +149,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - www.simproject.kr
@@ -180,20 +179,20 @@ spec:
 | Annotation | 설명 | 예시 값 |
 |------------|------|---------|
 | `cert-manager.io/cluster-issuer` | 인증서 발급자 | `letsencrypt-prod` |
-| `nginx.ingress.kubernetes.io/proxy-body-size` | 요청 body 크기 제한 | `50m` |
-| `nginx.ingress.kubernetes.io/ssl-redirect` | HTTP→HTTPS 리다이렉트 | `"true"` |
-| `nginx.ingress.kubernetes.io/backend-protocol` | 백엔드 프로토콜 | `"HTTPS"` |
-| `nginx.ingress.kubernetes.io/rewrite-target` | URL 재작성 | `/` |
-| `nginx.ingress.kubernetes.io/cors-allow-origin` | CORS 허용 origin | `"*"` |
+| `traefik.ingress.kubernetes.io/router.middlewares` | CrowdSec 바운서 | `ingress-nginx-bouncer@kubernetescrd` |
+| `traefik.ingress.kubernetes.io/service.serversscheme` | 백엔드 스킴 | `https` |
+| `traefik.ingress.kubernetes.io/service.serverstransport` | 백엔드 TLS 설정 | `argocd-backend@kubernetescrd` |
+
+HTTP를 HTTPS로 돌리는 설정은 Ingress annotation이 아니라 Traefik `web` entrypoint에 있다. `/.well-known/acme-challenge/`는 `allowACMEByPass`로 리다이렉트를 통과한다.
 
 ## 동작 원리
 
 ```
 1. Ingress 리소스 생성
         ↓
-2. nginx Ingress Controller가 자동 감지
+2. Traefik이 Ingress를 자동 감지
         ↓
-3. nginx 설정 업데이트 (server_name, location 등)
+3. Traefik 라우터가 Host와 Path를 갱신
         ↓
 4. cert-manager가 TLS 설정 감지
         ↓
@@ -238,11 +237,11 @@ kubectl get endpoints -n <namespace>
 
 ```bash
 # Ingress Controller 로그 확인
-kubectl logs -n ingress-nginx deploy/ingress-nginx-controller
+kubectl logs -n ingress-nginx deploy/infra-traefik
 ```
 
 **확인사항:**
-- `ingressClassName: nginx` 설정 확인
+- `ingressClassName: traefik` 설정 확인
 - namespace 확인
 
 ## 체크리스트
@@ -252,7 +251,7 @@ kubectl logs -n ingress-nginx deploy/ingress-nginx-controller
 - [ ] `terraform/dns.tf`에 proxied A 레코드 추가 (`local.nlb_ip`)
 - [ ] 비공개 서비스면 Access 애플리케이션과 `acme_challenge_hosts` 추가
 - [ ] Ingress YAML 작성
-- [ ] `ingressClassName: nginx` 확인
+- [ ] `ingressClassName: traefik` 확인
 - [ ] `cert-manager.io/cluster-issuer: letsencrypt-prod` annotation 확인
 - [ ] `main` 머지 후 Argo CD 동기화와 Terraform apply 확인
 - [ ] `kubectl get certificate` 로 READY 확인

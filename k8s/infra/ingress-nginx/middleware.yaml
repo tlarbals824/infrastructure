@@ -1,0 +1,33 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: bouncer
+  namespace: ingress-nginx
+spec:
+  plugin:
+    bouncer:
+      enabled: true
+      crowdsecMode: stream
+      crowdsecLapiScheme: http
+      crowdsecLapiHost: crowdsec-service.crowdsec.svc.cluster.local:8080
+      crowdsecLapiPath: /
+      # LAPI 의 BOUNCER_KEY_ingress 와 같은 값이다. 키 이름은 SealedSecret 의 키.
+      crowdsecLapiKeyFile: /etc/traefik/crowdsec/BOUNCER_KEY
+      forwardedHeadersCustomName: CF-Connecting-IP
+      # https://www.cloudflare.com/ips-v4 (2026-09-24). Traefik entrypoint trustedIPs 와 같다.
+      forwardedHeadersTrustedIps:
+        - 173.245.48.0/20
+        - 103.21.244.0/22
+        - 103.22.200.0/22
+        - 103.31.4.0/22
+        - 141.101.64.0/18
+        - 108.162.192.0/18
+        - 190.93.240.0/20
+        - 188.114.96.0/20
+        - 197.234.240.0/22
+        - 198.41.128.0/17
+        - 162.158.0.0/15
+        - 104.16.0.0/13
+        - 104.24.0.0/14
+        - 172.64.0.0/13
+        - 131.0.72.0/22

@@ -146,7 +146,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: infra-ingress-nginx
+  name: infra-traefik-crds
   namespace: argocd
   finalizers:
     - argoproj.io/resources-finalizer
@@ -154,79 +154,142 @@ spec:
   project: default
 
   source:
-    repoURL: https://kubernetes.github.io/ingress-nginx
-    chart: ingress-nginx
-    targetRevision: 4.13.1
+    repoURL: https://traefik.github.io/charts
+    chart: traefik-crds
+    targetRevision: 1.18.0
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ingress-nginx
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-traefik
+  namespace: argocd
+  finalizers:
+    - argoproj.io/resources-finalizer
+spec:
+  project: default
+
+  source:
+    repoURL: https://traefik.github.io/charts
+    chart: traefik
+    targetRevision: 41.6.0
     helm:
       values: |
-        controller:
-          # CrowdSec Lua bouncer 지원 이미지 (mainline v1.12+에서 Lua 제거됨)
-          image:
-            registry: docker.io
-            image: crowdsecurity/controller
-            tag: v1.13.2
-            digest: sha256:4575be24781cad35f8e58437db6a3f492df2a3167fed2b6759a6ff0dc3488d56
-          replicaCount: 2
-          updateStrategy:
-            type: RollingUpdate
-            rollingUpdate:
-              maxUnavailable: 0
-              maxSurge: 1
+        # SealedSecret crowdsec-bouncer-key 가 ingress-nginx 네임스페이스에 묶여 있다.
+        # 키를 다시 봉인하지 않으려고 Traefik 도 같은 네임스페이스에 둔다.
+        deployment:
+          replicas: 2
+        podDisruptionBudget:
+          enabled: true
           minAvailable: 1
-          topologySpreadConstraints:
-            - maxSkew: 1
-              topologyKey: kubernetes.io/hostname
-              whenUnsatisfiable: ScheduleAnyway
-              labelSelector:
-                matchLabels:
-                  app.kubernetes.io/name: ingress-nginx
-                  app.kubernetes.io/instance: infra-ingress-nginx
-                  app.kubernetes.io/component: controller
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-          config:
-            lua-shared-dicts: "crowdsec_cache: 50m"
-            plugins: "crowdsec"
-            # NLB 가 소스 IP 를 보존하므로 nginx 가 보는 주소는 Cloudflare 엣지다.
-            # CF-Connecting-IP 를 클라이언트 주소로 써야 CrowdSec 이 엣지 IP 를 차단하지 않는다.
-            # CIDR 목록은 https://www.cloudflare.com/ips-v4 (2026-09-24).
-            use-forwarded-headers: "true"
-            forwarded-for-header: "CF-Connecting-IP"
-            proxy-real-ip-cidr: "173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22"
-          extraVolumes:
-            - name: crowdsec-bouncer-plugin
-              emptyDir: {}
-          extraVolumeMounts:
-            - name: crowdsec-bouncer-plugin
-              mountPath: /etc/nginx/lua/plugins/crowdsec
-              readOnly: true
-          extraInitContainers:
-            - name: init-crowdsec-bouncer
-              image: index.docker.io/crowdsecurity/lua-bouncer-plugin:v1.1.2
-              env:
-                - name: API_URL
-                  value: "http://crowdsec-service.crowdsec.svc.cluster.local:8080"
-                - name: API_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: crowdsec-bouncer-key
-                      key: BOUNCER_KEY
-                - name: BOUNCER_CONFIG
-                  value: "/crowdsec/crowdsec-bouncer.conf"
-                - name: BAN_TEMPLATE_PATH
-                  value: "/etc/nginx/lua/plugins/crowdsec/templates/ban.html"
-                - name: CAPTCHA_TEMPLATE_PATH
-                  value: "/etc/nginx/lua/plugins/crowdsec/templates/captcha.html"
-              command: ["sh", "-c", "sh /docker_start.sh && cp -R /crowdsec/* /lua_plugins/crowdsec/"]
-              volumeMounts:
-                - name: crowdsec-bouncer-plugin
-                  mountPath: /lua_plugins/crowdsec
-          service:
+        ingressClass:
+          enabled: true
+          isDefaultClass: false
+          name: traefik
+        gateway:
+          enabled: false
+        experimental:
+          plugins:
+            bouncer:
+              moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+              version: v1.4.5
+        providers:
+          kubernetesCRD:
+            allowCrossNamespace: true
+            ingressClass: traefik
+          kubernetesIngress:
+            enabled: true
+            ingressClass: traefik
+            # argocd, nuclio Ingress 가 ingress-nginx 의 Middleware 를 참조한다.
+            crossProviderNamespaces:
+              - argocd
+              - nuclio
+              - ingress-nginx
+        volumes:
+          - name: crowdsec-bouncer-key
+            mountPath: /etc/traefik/crowdsec
+            type: secret
+            secretName: crowdsec-bouncer-key
+        # NLB 가 소스 IP 를 보존한다. externalTrafficPolicy Local 이라
+        # 파드가 보는 주소는 Cloudflare 엣지고, X-Forwarded-For 는 클라이언트다.
+        # CIDR 는 https://www.cloudflare.com/ips-v4 (2026-09-24).
+        ports:
+          web:
+            allowACMEByPass: true
+            http:
+              redirections:
+                entryPoint:
+                  to: websecure
+                  scheme: https
+                  permanent: true
+            forwardedHeaders:
+              trustedIPs:
+                - 173.245.48.0/20
+                - 103.21.244.0/22
+                - 103.22.200.0/22
+                - 103.31.4.0/22
+                - 141.101.64.0/18
+                - 108.162.192.0/18
+                - 190.93.240.0/20
+                - 188.114.96.0/20
+                - 197.234.240.0/22
+                - 198.41.128.0/17
+                - 162.158.0.0/15
+                - 104.16.0.0/13
+                - 104.24.0.0/14
+                - 172.64.0.0/13
+                - 131.0.72.0/22
+          websecure:
+            forwardedHeaders:
+              trustedIPs:
+                - 173.245.48.0/20
+                - 103.21.244.0/22
+                - 103.22.200.0/22
+                - 103.31.4.0/22
+                - 141.101.64.0/18
+                - 108.162.192.0/18
+                - 190.93.240.0/20
+                - 188.114.96.0/20
+                - 197.234.240.0/22
+                - 198.41.128.0/17
+                - 162.158.0.0/15
+                - 104.16.0.0/13
+                - 104.24.0.0/14
+                - 172.64.0.0/13
+                - 131.0.72.0/22
+        accessLog:
+          enabled: true
+          format: json
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: traefik
+                app.kubernetes.io/instance: infra-traefik
+        service:
+          annotations:
+            oci.oraclecloud.com/load-balancer-type: "nlb"
+          spec:
+            type: LoadBalancer
             loadBalancerIP: "134.185.104.125"
-            annotations:
-              oci.oraclecloud.com/load-balancer-type: "nlb"
+            externalTrafficPolicy: Local
 
   destination:
     server: https://kubernetes.default.svc
@@ -333,13 +396,11 @@ spec:
         agent:
           acquisition:
             - namespace: ingress-nginx
-              podName: ingress-nginx-controller-*
-              program: nginx
+              podName: infra-traefik-*
+              program: traefik
           env:
             - name: COLLECTIONS
-              value: "crowdsecurity/nginx"
-            - name: PARSERS
-              value: "crowdsecurity/nginx-logs"
+              value: "crowdsecurity/traefik"
           resources:
             requests:
               cpu: 100m
@@ -485,6 +546,7 @@ spec:
             enabled: true
             annotations:
               cert-manager.io/cluster-issuer: letsencrypt-prod
+              traefik.ingress.kubernetes.io/router.middlewares: ingress-nginx-bouncer@kubernetescrd
             path: /
             hosts:
               - nuclio.simproject.kr
@@ -492,7 +554,7 @@ spec:
               - secretName: nuclio-tls
                 hosts:
                   - nuclio.simproject.kr
-            ingressClassName: nginx
+            ingressClassName: traefik
 
         rbac:
           create: true
