@@ -205,7 +205,7 @@ k8s/infra/
 ├── ingress-nginx/
 │   ├── kustomization.yaml
 │   └── namespace.yaml
-└── nuclio/   # Nuclio 대시보드 (serverless.simproject.kr) - 차트 내장 ingress 사용
+└── serverless/   # Nuclio 대시보드 (serverless.simproject.kr)
 ```
 > 참고: Nuclio는 helm 차트의 내장 `dashboard.ingress`로 노출하므로
 > `k8s/infra/<app>/` 별도 Ingress 파일이 없습니다.

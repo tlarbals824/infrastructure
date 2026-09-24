@@ -14,9 +14,9 @@ TLS(Let's Encrypt)와 함께 노출합니다.
 
 | 컴포넌트 | 역할 | Namespace |
 |---------|------|-----------|
-| Dashboard | 웹 UI (코드 편집/배포/테스트/로그) | `nuclio` |
-| Controller | Nuclio CRD(Function 등)를 배포/관리 | `nuclio` |
-| Processor | 실행된 함수 파드 | `nuclio` |
+| Dashboard | 웹 UI (코드 편집/배포/테스트/로그) | `serverless` |
+| Controller | Nuclio CRD(Function 등)를 배포/관리 | `serverless` |
+| Processor | 실행된 함수 파드 | `serverless` |
 
 ## 배포 구조
 
@@ -49,8 +49,8 @@ Nuclio Dashboard (코드 편집기 + 배포 + 테스트)
 - **이미지 아키텍처**: OKE 노드가 arm64이므로 `quay.io/nuclio/{dashboard,controller}`
   이미지를 **`-arm64` 태그**(`1.15.27-arm64`)로 지정합니다. (기본값은 `-amd64`라
   arm64 노드에서 `exec format error` 발생)
-- **노출**: Gateway `public` 의 HTTPRoute `nuclio/dashboard`. 차트 내장 ingress는 꺼 둔다.
-- **RBAC**: `crdAccessMode: namespaced` (함수는 `nuclio` 네임스페이스 내 배포)
+- **노출**: Gateway `public` 의 HTTPRoute `serverless/dashboard`. 차트 내장 ingress는 꺼 둔다.
+- **RBAC**: `crdAccessMode: namespaced` (함수는 `serverless` 네임스페이스 내 배포)
 - **함수 이미지**: `registry.pushPullUrl` 은 `registry.crowdsec.svc.cluster.local:5000`.
   비우면 Kaniko가 Docker Hub로 푸시하다가 `UNAUTHORIZED` 로 실패한다.
 
@@ -74,7 +74,7 @@ DaemonSet `registry-node-config` 가 적어 둔 insecure registry 설정으로 �
 
 ### 인증서 발급 확인
 ```bash
-kubectl get certificate -n nuclio
+kubectl get certificate -n serverless
 ```
 
 ### DNS 레코드
