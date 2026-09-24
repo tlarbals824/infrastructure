@@ -43,8 +43,8 @@ spec:
       values: |
         crds:
           enabled: true
-        extraArgs:
-          - --feature-gates=ExperimentalGatewayAPISupport=true
+        config:
+          enableGatewayAPI: true
         resources:
           requests:
             cpu: 10m
