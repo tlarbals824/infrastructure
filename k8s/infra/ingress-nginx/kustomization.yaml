@@ -5,3 +5,4 @@ resources:
   - namespace.yaml
   - crowdsec-bouncer-key.yaml
   - middleware.yaml
+  - gateway.yaml

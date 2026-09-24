@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: argocd-server
-  annotations:
-    traefik.ingress.kubernetes.io/service.serversscheme: https
-    # ServersTransport 참조는 Service 에 있어야 적용된다.
-    traefik.ingress.kubernetes.io/service.serverstransport: argocd-argocd-backend@kubernetescrd
