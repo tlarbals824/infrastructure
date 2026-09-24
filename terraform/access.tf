@@ -59,7 +59,7 @@ resource "cloudflare_access_policy" "nuclio" {
 # 이 바이패스가 없으면 인증서 발급을 위해 Access 를 잠시 지워야 한다.
 locals {
   acme_challenge_hosts = {
-    argocd = "argocd.${local.domain_name}"
+    argocd     = "argocd.${local.domain_name}"
     serverless = "serverless.${local.domain_name}"
   }
 }
