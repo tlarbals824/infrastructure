@@ -32,8 +32,8 @@ resource "cloudflare_access_policy" "argocd" {
 
 resource "cloudflare_access_application" "nuclio" {
   zone_id          = var.cloudflare_zone_id
-  name             = "Nuclio"
-  domain           = "nuclio.${local.domain_name}"
+  name             = "Serverless"
+  domain           = "serverless.${local.domain_name}"
   type             = "self_hosted"
   session_duration = "24h"
 }
@@ -60,7 +60,7 @@ resource "cloudflare_access_policy" "nuclio" {
 locals {
   acme_challenge_hosts = {
     argocd = "argocd.${local.domain_name}"
-    nuclio = "nuclio.${local.domain_name}"
+    serverless = "serverless.${local.domain_name}"
   }
 }
 

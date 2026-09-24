@@ -28,7 +28,7 @@ OKE 클러스터의 Ingress 구조 및 TLS 인증서 관리 방법을 정리한 
 ┌─────────────────────────────────────────────────────────────────┐
 │  Backend Services                                               │
 │  - ArgoCD (argocd.simproject.kr)                               │
-│  - Nuclio Dashboard (nuclio.simproject.kr)                     │
+│  - Nuclio Dashboard (serverless.simproject.kr)                     │
 │  - 추가 서비스 확장 가능                                          │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -238,7 +238,7 @@ k8s/infra/
 ├── ingress-nginx/
 │   ├── kustomization.yaml
 │   └── namespace.yaml
-└── nuclio/   # Nuclio 대시보드 (nuclio.simproject.kr) - 차트 내장 ingress 사용
+└── nuclio/   # Nuclio 대시보드 (serverless.simproject.kr) - 차트 내장 ingress 사용
 ```
 > 참고: Nuclio는 helm 차트의 내장 `dashboard.ingress`로 노출하므로
 > `k8s/infra/<app>/` 별도 Ingress 파일이 없습니다.

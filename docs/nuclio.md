@@ -7,7 +7,7 @@
 ## 개요
 
 Nuclio는 고성능 이벤트/데이터 드리븐 서버리스입니다. 이 저장소에서는 ArgoCD를 통해
-GitOps 방식으로 배포하며, 대시보드 UI를 `nuclio.simproject.kr` 도메인으로
+GitOps 방식으로 배포하며, 대시보드 UI를 `serverless.simproject.kr` 도메인으로
 TLS(Let's Encrypt)와 함께 노출합니다.
 
 ## 구성 요소
@@ -32,7 +32,7 @@ ArgoCD (k8s/argocd-apps/infra.yaml)
 OpenFaaS와 동일하게 **Cloudflare Access** 가 로그인을 담당합니다.
 
 ```
-Browser → https://nuclio.simproject.kr
+Browser → https://serverless.simproject.kr
     ↓
 Cloudflare Access 로그인 (허용 이메일: srfsrf0103@gmail.com)
     ↓
@@ -69,6 +69,6 @@ kubectl get certificate -n nuclio
 ```
 
 ### DNS 레코드
-`nuclio.simproject.kr` A 레코드는 `terraform/dns.tf`의
+`serverless.simproject.kr` A 레코드는 `terraform/dns.tf`의
 `cloudflare_record.nuclio` 리소스로 관리됩니다.
 Terraform 적용 후 DNS 전파까지 수 분이 걸릴 수 있습니다.
