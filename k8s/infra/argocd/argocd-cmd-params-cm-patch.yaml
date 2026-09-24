@@ -4,3 +4,5 @@ metadata:
   name: argocd-cmd-params-cm
 data:
   server.enable.proxy.extension: "true"
+  # TLS 는 Gateway 에서 끝낸다. 서버는 HTTP 로만 받는다.
+  server.insecure: "true"

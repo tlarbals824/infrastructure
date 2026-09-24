@@ -199,6 +199,9 @@ spec:
           name: traefik
         gateway:
           enabled: false
+        gatewayClass:
+          enabled: true
+          name: traefik
         experimental:
           plugins:
             bouncer:
@@ -207,14 +210,12 @@ spec:
         providers:
           kubernetesCRD:
             allowCrossNamespace: true
+          kubernetesGateway:
+            enabled: true
+          # cert-manager HTTP-01 은 임시 Ingress 로 받는다.
           kubernetesIngress:
             enabled: true
             ingressClass: traefik
-            # argocd, nuclio Ingress 가 ingress-nginx 의 Middleware 를 참조한다.
-            crossProviderNamespaces:
-              - argocd
-              - nuclio
-              - ingress-nginx
         volumes:
           - name: crowdsec-bouncer-key
             mountPath: /etc/traefik/crowdsec
@@ -514,50 +515,41 @@ metadata:
 spec:
   project: default
 
-  source:
-    repoURL: https://nuclio.github.io/nuclio/charts
-    chart: nuclio
-    targetRevision: 0.23.4
-    helm:
-      values: |
-        controller:
-          enabled: true
-          image:
-            repository: quay.io/nuclio/controller
-            tag: 1.15.27-arm64
-            pullPolicy: IfNotPresent
-
-        dashboard:
-          enabled: true
-          replicas: 1
-          servicePort: 8070
-          # OKE에 docker daemon이 없으므로 in-cluster 빌더(kaniko) 사용.
-          # docker(기본값)면 시작 시 /var/run/docker.sock 연결 실패로 크래시
-          containerBuilderKind: kaniko
-          image:
-            repository: quay.io/nuclio/dashboard
-            tag: 1.15.27-arm64
-            pullPolicy: IfNotPresent
-          # Cloudflare Access가 로그인을 담당 (ArgoCD와 동일한 패턴)
-          authConfig:
-            kind: nop
-          ingress:
+  sources:
+    - repoURL: https://nuclio.github.io/nuclio/charts
+      chart: nuclio
+      targetRevision: 0.23.4
+      helm:
+        values: |
+          controller:
             enabled: true
-            annotations:
-              cert-manager.io/cluster-issuer: letsencrypt-prod
-              traefik.ingress.kubernetes.io/router.middlewares: ingress-nginx-bouncer@kubernetescrd
-            path: /
-            hosts:
-              - nuclio.simproject.kr
-            tls:
-              - secretName: nuclio-tls
-                hosts:
-                  - nuclio.simproject.kr
-            ingressClassName: traefik
+            image:
+              repository: quay.io/nuclio/controller
+              tag: 1.15.27-arm64
+              pullPolicy: IfNotPresent
 
-        rbac:
-          create: true
-          crdAccessMode: namespaced
+          dashboard:
+            enabled: true
+            replicas: 1
+            servicePort: 8070
+            # OKE에 docker daemon이 없으므로 in-cluster 빌더(kaniko) 사용.
+            containerBuilderKind: kaniko
+            image:
+              repository: quay.io/nuclio/dashboard
+              tag: 1.15.27-arm64
+              pullPolicy: IfNotPresent
+            # Cloudflare Access가 로그인을 담당한다.
+            authConfig:
+              kind: nop
+            ingress:
+              enabled: false
+
+          rbac:
+            create: true
+            crdAccessMode: namespaced
+    - repoURL: https://github.com/tlarbals824/infrastructure.git
+      targetRevision: main
+      path: k8s/infra/nuclio
 
   destination:
     server: https://kubernetes.default.svc

@@ -4,6 +4,9 @@ metadata:
   name: argocd-server
 spec:
   template:
+    metadata:
+      annotations:
+        infrastructure/server-insecure: "true"
     spec:
       initContainers:
         - name: argo-rollouts-extension
