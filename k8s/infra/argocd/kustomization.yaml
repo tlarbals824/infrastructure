@@ -9,8 +9,10 @@ resources:
   - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/install.yaml
   - certificate.yaml
   - reference-grant.yaml
-  - middleware.yaml
   - httproute.yaml
+
+components:
+  - ../../components/crowdsec-bouncer
 
 patches:
   - path: argocd-cm-patch.yaml
