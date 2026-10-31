@@ -29,7 +29,7 @@ cert-manager HTTP-01은 Gateway solver다. ClusterIssuer의 parent는 `edge/publ
 
 Spread 라벨은 `app.kubernetes.io/instance=infra-traefik-edge`다. 릴리스 이름만 맞추면 두 레플리카가 한 노드에 모인다.
 
-CrowdSec bouncer는 Traefik 기동 때 `plugins.traefik.io`에서 받는다. 한 레플리카가 타임아웃 나면 그 프로세스는 플러그인을 끄고, bouncer를 쓰는 라우트를 버린 채 `404 page not found`를 계속 응답한다. readiness와 liveness는 ping과 플러그인 디렉터리를 같이 본다.
+CrowdSec bouncer는 Traefik 기동 때 `plugins.traefik.io`에서 받는다. 한 레플리카가 타임아웃 나면 그 프로세스는 플러그인을 끄고, bouncer를 쓰는 라우트를 버린 채 `404 page not found`를 계속 응답한다. `abortOnPluginFailure`가 켜져 있으면 그 프로세스는 종료되고 다시 받는다.
 
 Middleware `bouncer`는 HTTPRoute와 같은 네임스페이스에 있어야 한다. ExtensionRef에는 네임스페이스가 없다. LAPI는 `infra-crowdsec-service.crowdsec.svc.cluster.local:8080`이다. `crowdsec-service`라는 Service는 없다. Cloudflare IPv4 목록은 Helm의 `cloudflareIps` 앵커와 호스트 폴더의 Middleware다. 한쪽만 고치면 안 된다.
 
