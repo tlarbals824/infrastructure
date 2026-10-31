@@ -22,7 +22,7 @@ TLS(Let's Encrypt)와 함께 노출합니다.
 
 ```
 ArgoCD (k8s/argocd-apps/infra.yaml)
- └── infra-nuclio → Nuclio helm chart (nuclio/nuclio 0.23.4)
+ └── infra-nuclio → Nuclio helm chart (nuclio/nuclio 0.23.11)
 ```
 
 변경 사항은 `main` 브랜치에 push 되면 ArgoCD가 자동 동기화합니다.
@@ -47,7 +47,7 @@ Nuclio Dashboard (코드 편집기 + 배포 + 테스트)
 ## 주요 설정
 
 - **이미지 아키텍처**: OKE 노드가 arm64이므로 `quay.io/nuclio/{dashboard,controller}`
-  이미지를 **`-arm64` 태그**(`1.15.27-arm64`)로 지정합니다. (기본값은 `-amd64`라
+  이미지를 **`-arm64` 태그**(`1.17.11-arm64`)로 지정합니다. (기본값은 `-amd64`라
   arm64 노드에서 `exec format error` 발생)
 - **노출**: Gateway `public` 의 HTTPRoute `serverless/dashboard`. 차트 내장 ingress는 꺼 둔다.
 - **RBAC**: `crdAccessMode: namespaced` (함수는 `serverless` 네임스페이스 내 배포)

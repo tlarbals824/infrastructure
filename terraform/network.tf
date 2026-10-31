@@ -3,6 +3,11 @@ resource "oci_core_vcn" "k8s" {
   cidr_blocks    = ["10.0.0.0/16"]
   display_name   = "${var.project_name}-vcn"
   dns_label      = var.project_name
+
+  # VCN 을 교체하면 서브넷에 붙은 노드, NLB, 블록 볼륨 삭제가 중간에 멈춰 남는다.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "oci_core_internet_gateway" "k8s" {
@@ -10,12 +15,21 @@ resource "oci_core_internet_gateway" "k8s" {
   vcn_id         = oci_core_vcn.k8s.id
   display_name   = "${var.project_name}-igw"
   enabled        = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "oci_core_nat_gateway" "k8s" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_vcn.k8s.id
   display_name   = "${var.project_name}-nat"
+
+  # NAT 는 교체 도중 삭제가 실패하면 이전 게이트웨이가 계속 과금된다.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "oci_core_service_gateway" "k8s" {
@@ -25,6 +39,10 @@ resource "oci_core_service_gateway" "k8s" {
 
   services {
     service_id = data.oci_core_services.all_services.services[0].id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -239,6 +257,10 @@ resource "oci_core_subnet" "api_endpoint" {
   dns_label         = "api"
   route_table_id    = oci_core_route_table.public.id
   security_list_ids = [oci_core_security_list.api_endpoint.id]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "oci_core_subnet" "lb" {
@@ -249,6 +271,10 @@ resource "oci_core_subnet" "lb" {
   dns_label         = "lb"
   route_table_id    = oci_core_route_table.public.id
   security_list_ids = [oci_core_security_list.lb.id]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "oci_core_subnet" "workers" {
@@ -260,4 +286,8 @@ resource "oci_core_subnet" "workers" {
   route_table_id             = oci_core_route_table.private.id
   security_list_ids          = [oci_core_security_list.workers.id]
   prohibit_public_ip_on_vnic = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }

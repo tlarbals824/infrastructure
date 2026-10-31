@@ -10,10 +10,16 @@ spec:
     spec:
       initContainers:
         - name: argo-rollouts-extension
-          image: quay.io/argoprojlabs/argocd-extension-installer:v0.0.8
+          image: quay.io/argoprojlabs/argocd-extension-installer:v1.1.0
           env:
+            - name: EXTENSION_NAME
+              value: argo-rollouts
+            - name: EXTENSION_VERSION
+              value: v0.4.1
             - name: EXTENSION_URL
-              value: https://github.com/argoproj-labs/rollout-extension/releases/download/v0.3.6/extension.tar
+              value: https://github.com/argoproj-labs/rollout-extension/releases/download/v0.4.1/extension.tar
+            - name: EXTENSIONS_DIR
+              value: /tmp/extensions
           volumeMounts:
             - name: extensions
               mountPath: /tmp/extensions/
