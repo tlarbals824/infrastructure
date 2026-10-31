@@ -1,0 +1,14 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: ReferenceGrant
+metadata:
+  name: allow-public-gateway-tls
+  namespace: crowdsec
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: edge
+  to:
+    - group: ""
+      kind: Secret
+      name: livesync-tls

@@ -29,6 +29,8 @@ cert-manager HTTP-01은 Gateway solver다. ClusterIssuer의 parent는 `edge/publ
 
 Spread 라벨은 `app.kubernetes.io/instance=infra-traefik-edge`다. 릴리스 이름만 맞추면 두 레플리카가 한 노드에 모인다.
 
-Middleware `bouncer`는 HTTPRoute와 같은 네임스페이스에 있어야 한다. ExtensionRef에는 네임스페이스가 없다. LAPI는 `infra-crowdsec-service.crowdsec.svc.cluster.local:8080`이다. `crowdsec-service`라는 Service는 없다. Cloudflare IPv4 목록은 Helm의 `cloudflareIps` 앵커와 Middleware 사본 두 곳이다. 한쪽만 고치면 안 된다.
+Middleware `bouncer`는 HTTPRoute와 같은 네임스페이스에 있어야 한다. ExtensionRef에는 네임스페이스가 없다. LAPI는 `infra-crowdsec-service.crowdsec.svc.cluster.local:8080`이다. `crowdsec-service`라는 Service는 없다. Cloudflare IPv4 목록은 Helm의 `cloudflareIps` 앵커와 호스트 폴더의 Middleware다. 한쪽만 고치면 안 된다.
+
+`livesync.simproject.kr`는 DNS만 있고 Access는 없다. 클라이언트는 CouchDB 기본 인증을 보내고, Access 로그인 페이지를 통과하지 못한다.
 
 Argo CD는 Gateway에서 TLS가 끝난다. `server.insecure: "true"`이고 HTTPRoute 백엔드는 `argocd-server:80`이다. 파드 IP로 HTTPS를 치면 인증서에 IP SAN이 없어 Traefik이 500을 반환한다.
