@@ -29,7 +29,7 @@ Kubernetes API 6443은 IP 제한을 두지 않는다. 로그인이 게이트다.
 
 `crowdsec/core-pvc`는 OCI 블록 볼륨 50Gi, `ReadWriteOnce`다. 클레임은 네임스페이스 밖 파드가 마운트할 수 없고, 한 노드에만 붙는다. 레지스트리 subPath `registry`와 CrowdSec LAPI는 같은 노드에 둔다. `crowdsec`은 역할 이름이 아니다. 디스크가 그 네임스페이스에 있어서 소비자도 거기 있다.
 
-subPath를 쓰는 CrowdSec 값은 `cleanup-subpath-dirs` init container와 같이 둔다. `scripts/lint_crowdsec_convention.py`가 검사한다. 그 정리는 `config/`와 `crowdsec/`만 지운다. `registry/` 데이터는 지우지 않는다.
+subPath를 쓰는 CrowdSec 값은 `cleanup-subpath-dirs` init container와 같이 둔다. `scripts/lint_crowdsec_convention.py`가 검사한다. 그 정리는 `config/`와 `crowdsec/`만 지운다. `registry/`와 LiveSync `livesync/`는 지우지 않는다. CouchDB와 백업 CronJob도 이 클레임을 같은 노드에서 쓴다.
 
 ## 노드를 바꿀 때
 

@@ -1,0 +1,26 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: livesync
+  namespace: crowdsec
+spec:
+  parentRefs:
+    - name: public
+      namespace: edge
+      sectionName: https-livesync
+  hostnames:
+    - livesync.simproject.kr
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: bouncer
+      backendRefs:
+        - name: livesync
+          port: 5984

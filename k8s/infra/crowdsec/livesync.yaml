@@ -1,0 +1,193 @@
+# Obsidian LiveSync CouchDB. core-pvc subPath livesync 는 cleanup-subpath-dirs 가 지우지 않는다.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: livesync-config
+  namespace: crowdsec
+  labels:
+    app.kubernetes.io/name: livesync
+    app.kubernetes.io/part-of: infra
+data:
+  livesync.ini: |
+    [couchdb]
+    single_node = true
+    max_document_size = 52428800
+
+    [chttpd]
+    require_valid_user = true
+    bind_address = 0.0.0.0
+
+    [chttpd_auth]
+    require_valid_user = true
+
+    [httpd]
+    enable_cors = true
+
+    [cors]
+    credentials = true
+    origins = *
+    headers = accept, authorization, content-type, origin, referer, x-csrf-token
+    methods = GET, PUT, POST, HEAD, DELETE, OPTIONS
+  start.sh: |
+    #!/bin/sh
+    set -eu
+    /docker-entrypoint.sh /opt/couchdb/bin/couchdb &
+    pid=$!
+    i=0
+    until curl -fsS http://127.0.0.1:5984/_up >/dev/null; do
+      i=$((i + 1))
+      if [ "$i" -gt 60 ]; then
+        echo "couchdb did not become ready" >&2
+        kill "$pid" || true
+        wait "$pid" || true
+        exit 1
+      fi
+      sleep 2
+    done
+
+    auth="admin:${ADMIN_PASSWORD}"
+    code=$(curl -s -o /dev/null -w '%{http_code}' -u "$auth" http://127.0.0.1:5984/obsidian)
+    if [ "$code" = "404" ]; then
+      curl -fsS -u "$auth" -X PUT http://127.0.0.1:5984/obsidian >/dev/null
+    elif [ "$code" != "200" ]; then
+      echo "obsidian database check returned ${code}" >&2
+      kill "$pid" || true
+      wait "$pid" || true
+      exit 1
+    fi
+
+    user_code=$(curl -s -o /dev/null -w '%{http_code}' -u "$auth" http://127.0.0.1:5984/_users/org.couchdb.user:livesync)
+    if [ "$user_code" = "404" ]; then
+      curl -fsS -u "$auth" -X PUT http://127.0.0.1:5984/_users/org.couchdb.user:livesync \
+        -H 'Content-Type: application/json' \
+        -d "{\"name\":\"livesync\",\"password\":\"${LIVESYNC_PASSWORD}\",\"roles\":[],\"type\":\"user\"}" >/dev/null
+    elif [ "$user_code" != "200" ]; then
+      echo "livesync user check returned ${user_code}" >&2
+      kill "$pid" || true
+      wait "$pid" || true
+      exit 1
+    fi
+
+    curl -fsS -u "$auth" -X PUT http://127.0.0.1:5984/obsidian/_security \
+      -H 'Content-Type: application/json' \
+      -d '{"admins":{"names":["livesync"],"roles":[]},"members":{"names":["livesync"],"roles":[]}}' >/dev/null
+
+    wait "$pid"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livesync
+  namespace: crowdsec
+  labels:
+    app.kubernetes.io/name: livesync
+    app.kubernetes.io/part-of: infra
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: livesync
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: livesync
+        app.kubernetes.io/part-of: infra
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  k8s-app: infra-crowdsec
+                  type: lapi
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: prepare-data
+          image: docker.io/library/busybox:1.37.0
+          command: ["sh", "-c", "mkdir -p /data && chown 5984:5984 /data"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              subPath: livesync
+      containers:
+        - name: couchdb
+          image: docker.io/library/couchdb:3.5.3
+          command: ["tini", "--", "/bin/sh", "/etc/livesync/start.sh"]
+          ports:
+            - name: http
+              containerPort: 5984
+          env:
+            - name: COUCHDB_USER
+              value: admin
+            - name: COUCHDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: livesync-auth
+                  key: admin-password
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: livesync-auth
+                  key: admin-password
+            - name: LIVESYNC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: livesync-auth
+                  key: livesync-password
+          readinessProbe:
+            httpGet:
+              path: /_up
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /_up
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /opt/couchdb/data
+              subPath: livesync
+            - name: config
+              mountPath: /opt/couchdb/etc/local.d/livesync.ini
+              subPath: livesync.ini
+            - name: config
+              mountPath: /etc/livesync/start.sh
+              subPath: start.sh
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: core-pvc
+        - name: config
+          configMap:
+            name: livesync-config
+            defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livesync
+  namespace: crowdsec
+  labels:
+    app.kubernetes.io/name: livesync
+    app.kubernetes.io/part-of: infra
+spec:
+  selector:
+    app.kubernetes.io/name: livesync
+  ports:
+    - name: http
+      port: 5984
+      targetPort: http

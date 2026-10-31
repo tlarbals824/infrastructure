@@ -6,3 +6,7 @@ resources:
   - scenarios.yaml
   - pvc.yaml
   - registry.yaml
+  - livesync-auth.yaml
+  - livesync-backup-secret.yaml
+  - livesync.yaml
+  - livesync-backup.yaml

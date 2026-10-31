@@ -7,7 +7,9 @@ locals {
   nlb_ip      = "134.185.104.125"
   domain_name = "simproject.kr"
   # 공개 호스트 이름. k8s/edge/hosts/<name> 폴더와 같은 키를 쓴다.
-  public_hosts = toset(["argocd", "serverless"])
+  public_hosts = toset(["argocd", "serverless", "livesync"])
+  # livesync 는 CouchDB 기본 인증이다. Access 를 씌우면 폰의 LiveSync 가 로그인 페이지에 막힌다.
+  access_hosts = toset(["argocd", "serverless"])
 }
 
 # =============================================================================

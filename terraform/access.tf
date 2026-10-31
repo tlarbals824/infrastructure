@@ -23,7 +23,7 @@ moved {
 }
 
 resource "cloudflare_access_application" "public" {
-  for_each = local.public_hosts
+  for_each = local.access_hosts
 
   zone_id          = var.cloudflare_zone_id
   name             = each.key
@@ -54,7 +54,7 @@ resource "cloudflare_access_policy" "public" {
 # 경로가 더 구체적인 Access 애플리케이션이 호스트 전체 정책보다 우선한다.
 # 이 바이패스가 없으면 인증서 발급을 위해 Access 를 잠시 지워야 한다.
 resource "cloudflare_access_application" "acme_challenge" {
-  for_each = local.public_hosts
+  for_each = local.access_hosts
 
   zone_id              = var.cloudflare_zone_id
   name                 = "ACME ${each.key}"

@@ -9,3 +9,4 @@ resources:
 components:
   - hosts/argocd
   - hosts/serverless
+  - hosts/livesync
