@@ -26,6 +26,9 @@ env:
   TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
   AWS_ACCESS_KEY_ID: ${{ secrets.OCI_S3_ACCESS_KEY }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_S3_SECRET_KEY }}
+  # Terraform 1.17 S3 클라이언트의 aws-chunked PutObject 를 OCI 가 501 로 거절한다.
+  AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+  AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
 
 jobs:
   plan:

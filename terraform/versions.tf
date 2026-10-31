@@ -14,6 +14,10 @@ terraform {
     }
   }
 
+  # Terraform 1.17 은 PutObject 에 aws-chunked 체크섬을 붙인다. OCI 는 501 을 반환한다.
+  # skip_s3_checksum 만으로는 빠지지 않으므로 워크플로에서
+  # AWS_REQUEST_CHECKSUM_CALCULATION=when_required 와
+  # AWS_RESPONSE_CHECKSUM_VALIDATION=when_required 를 설정한다.
   backend "s3" {
     bucket = "terraform"
     key    = "terraform.tfstate"
