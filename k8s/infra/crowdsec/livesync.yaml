@@ -15,6 +15,8 @@ data:
 
     [chttpd]
     require_valid_user = true
+    enable_cors = true
+    max_http_request_size = 4294967296
     bind_address = 0.0.0.0
 
     [chttpd_auth]
@@ -22,6 +24,7 @@ data:
 
     [httpd]
     enable_cors = true
+    WWW-Authenticate = Basic realm="couchdb"
 
     [cors]
     credentials = true
