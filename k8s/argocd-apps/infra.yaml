@@ -171,6 +171,31 @@ spec:
           tag: v3.7.17
         deployment:
           replicas: 2
+        # 플러그인 다운로드가 타임아웃 나면 그 프로세스는 bouncer 를 끄고
+        # 그 미들웨어를 쓰는 라우트를 버린 채 404 를 계속 응답한다. ping 과
+        # 플러그인 디렉터리가 같이 있을 때만 트래픽을 받고, 없으면 재시작한다.
+        readinessProbe:
+          httpGet: null
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - /usr/bin/wget -qO- http://127.0.0.1:8080/ping && find /plugins-storage/sources -type d -name crowdsec-bouncer-traefik-plugin | grep -q .
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        livenessProbe:
+          httpGet: null
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - /usr/bin/wget -qO- http://127.0.0.1:8080/ping && find /plugins-storage/sources -type d -name crowdsec-bouncer-traefik-plugin | grep -q .
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3
         podDisruptionBudget:
           enabled: true
           minAvailable: 1
