@@ -16,6 +16,11 @@ output "cluster_id" {
   value       = oci_containerengine_cluster.k8s.id
 }
 
+output "node_pool_id" {
+  description = "ARM worker node pool OCID"
+  value       = oci_containerengine_node_pool.arm.id
+}
+
 output "kubeconfig_command" {
   description = "Command to generate kubeconfig"
   value       = "oci ce cluster create-kubeconfig --cluster-id ${oci_containerengine_cluster.k8s.id} --file $HOME/.kube/config --region ap-chuncheon-1 --token-version 2.0.0"

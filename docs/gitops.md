@@ -16,7 +16,7 @@ Helm 값이 Application 매니페스트 안에 있으면 `root`를 먼저 동기
 
 plan/apply는 GitHub Actions다. `terraform/**`가 바뀐 PR만 plan이 돈다. 매니페스트만 바꾼 PR의 게이트는 Kubernetes Checks다. lock 파일 `.terraform.lock.hcl`은 커밋하고, Linux와 macOS `h1` 해시를 모두 넣는다. macOS 해시만 있으면 Ubuntu `terraform validate`가 실패한다. `.terraform/`, tfvars, tfstate, pem은 커밋하지 않는다.
 
-OCI provider는 `~> 9.11.0`이다. Cloudflare provider는 `~> 4.52.10`을 유지한다. Cloudflare v5는 Access, DNS, `cloudflare_ip_ranges` 속성 이름이 바뀌어 리소스를 다시 만든다. 워크플로는 Terraform 1.17.1을 쓴다.
+OCI provider는 `~> 9.11.0`이다. Cloudflare provider는 `~> 4.52.10`을 유지한다. Cloudflare v5는 Access, DNS, `cloudflare_ip_ranges` 속성 이름이 바뀌어 리소스를 다시 만든다. 워크플로는 Terraform 1.17.1을 쓴다. 1.17의 S3 클라이언트는 상태 PutObject에 `aws-chunked` 체크섬을 붙이고 OCI Object Storage는 501을 반환한다. `skip_s3_checksum`만으로는 빠지지 않는다. plan/apply 워크플로는 `AWS_REQUEST_CHECKSUM_CALCULATION=when_required`와 `AWS_RESPONSE_CHECKSUM_VALIDATION=when_required`를 설정한다.
 
 ## 매니페스트
 
