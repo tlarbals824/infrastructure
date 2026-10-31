@@ -39,8 +39,8 @@ terraform fmt -check -recursive
 ```
 
 Provider 버전은 `terraform/.terraform.lock.hcl` 에 고정되어 있습니다.
-GitHub Actions 는 Terraform 1.10.3 과 `terraform init -lockfile=readonly` 를 사용합니다.
-제약을 바꾼 뒤에는 1.10.3 으로 `terraform init -backend=false` 를 실행해 lock 파일을 갱신하고 함께 커밋합니다.
+GitHub Actions 는 Terraform 1.17.1 과 `terraform init -lockfile=readonly` 를 사용합니다.
+제약을 바꾼 뒤에는 1.17.1 으로 `terraform init -backend=false` 를 실행해 lock 파일을 갱신하고 함께 커밋합니다.
 
 ### 2. PR 생성 및 머지
 

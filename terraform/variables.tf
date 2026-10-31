@@ -51,7 +51,7 @@ variable "common_tags" {
 variable "kubernetes_version" {
   description = "Kubernetes version for OKE cluster"
   type        = string
-  default     = "v1.36.1"
+  default     = "v1.36.4"
 }
 
 variable "oke_minimum_image_build" {

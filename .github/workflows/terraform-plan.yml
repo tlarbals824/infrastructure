@@ -37,12 +37,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
-          terraform_version: 1.10.3
+          terraform_version: 1.17.1
 
       - name: Terraform Init
         run: terraform init -lockfile=readonly
@@ -59,7 +59,7 @@ jobs:
         continue-on-error: true
 
       - name: Comment Plan on PR
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -80,6 +80,24 @@ jobs:
               repo: context.repo.repo,
               body: body
             })
+
+      - name: Reject replacement of billed resources
+        if: steps.plan.outcome == 'success'
+        run: |
+          python3 - <<'PY'
+          import re, sys
+          text = open("/tmp/tfplan-output.txt", encoding="utf-8", errors="replace").read()
+          pattern = re.compile(
+              r"^.*# (oci_containerengine_cluster|oci_containerengine_node_pool|oci_core_vcn|oci_core_nat_gateway|oci_core_internet_gateway|oci_core_service_gateway|oci_core_subnet)\.[^\n]*(must be replaced|will be destroyed).*$",
+              re.M,
+          )
+          hits = list(pattern.finditer(text))
+          if hits:
+              print("Refusing a plan that would replace or destroy OCI resources. Replacement leaves instances, boot volumes, NAT gateways, or load balancers outside Terraform state.")
+              for hit in hits:
+                  print(hit.group(0))
+              sys.exit(1)
+          PY
 
       - name: Plan Status
         if: steps.plan.outcome == 'failure'

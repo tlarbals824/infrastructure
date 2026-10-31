@@ -1,15 +1,16 @@
 terraform {
-  required_version = ">= 1.10.0"
+  required_version = ">= 1.17.0"
 
   required_providers {
     oci = {
       source  = "oracle/oci"
-      version = "~> 8.24.0"
+      version = "~> 9.11.0"
     }
-    # 5.x 는 cloudflare_ip_ranges 속성 이름이 바뀐다. 4.52 대에 고정한다.
+    # 5.x 는 Access, DNS, cloudflare_ip_ranges 속성 이름이 바뀌어 리소스를 다시 만든다.
+    # 4.52 대의 최신 보안 패치에 고정한다.
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.52.8"
+      version = "~> 4.52.10"
     }
   }
 
