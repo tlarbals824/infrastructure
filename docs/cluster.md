@@ -35,7 +35,7 @@ subPath를 쓰는 CrowdSec 값은 `cleanup-subpath-dirs` init container와 같�
 
 이 클러스터는 `BASIC_CLUSTER`다. 노드 순환(`node_pool_cycling_details`, `INSTANCE_REPLACE`, `BOOT_VOLUME_REPLACE`)과 노드 풀 축출 설정은 Enhanced 전용이다. Basic 에서 넣으면 `UpdateNodePool`이 400으로 거절된다. Enhanced 로 바꾸면 클러스터 관리 비용이 생긴다.
 
-Terraform 은 노드 풀의 쿠버네티스 버전과 이미지만 제자리에서 갱신한다. 그 변경은 이미 떠 있는 노드를 갈아끼우지 않는다. Apply 다음 `scripts/replace_basic_oke_nodes.sh`가 오래된 노드를 한 대씩 지운다. `isDecrementSize`는 false라 풀 크기는 2로 남고, OKE가 그 노드를 종료한 뒤 같은 풀에 새 노드를 만든다. 세 번째 인스턴스를 만들지 않는다. A1 Always Free 할당량은 노드 두 대가 다 쓴다.
+Terraform 은 노드 풀의 쿠버네티스 버전과 이미지만 제자리에서 갱신한다. 그 변경은 이미 떠 있는 노드를 갈아끼우지 않는다. Apply 다음 `scripts/replace_basic_oke_nodes.sh`가 오래된 노드를 한 대씩 지운다. `isDecrementSize`는 false라 풀 크기는 2로 남고, OKE가 그 노드를 종료한 뒤 같은 풀에 새 노드를 만든다. 세 번째 인스턴스를 만들지 않는다. A1 Always Free 할당량은 노드 두 대가 다 쓴다. 노드 풀 조회에는 종료된 노드가 `DELETED`로 한동안 남는다. 대수는 `ACTIVE`만 센다.
 
 삭제는 유예 `PT20M` 뒤에 파드가 남아 있어도 그 인스턴스를 강제 종료한다. 종료 전에 그 인스턴스의 부트 볼륨 OCID를 기록하고, 종료 뒤에도 `AVAILABLE`이면 그 볼륨만 지운다. 붙어 있지 않은 볼륨을 훑어 지우지 않는다. `core-pvc`는 블록 볼륨이라 노드를 지울 때 분리만 되고 클레임은 남는다.
 

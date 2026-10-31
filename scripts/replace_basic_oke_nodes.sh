@@ -13,6 +13,7 @@ set -euo pipefail
 : "${NODE_POOL_ID:?}"
 
 export OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING=True
+export SUPPRESS_LABEL_WARNING=True
 mkdir -p "${HOME}/.oci"
 chmod 700 "${HOME}/.oci"
 printf '%s\n' "${OCI_CLI_KEY_CONTENT}" > "${HOME}/.oci/key.pem"
@@ -33,23 +34,24 @@ pool_json() {
   oci ce node-pool get --node-pool-id "${NODE_POOL_ID}" --output json
 }
 
-# Wait until the pool has exactly two ACTIVE nodes and nothing else.
+# OKE keeps DELETED nodes in the pool list. Only ACTIVE nodes count toward size 2.
+# A node that is still DELETING or CREATING is waited out, not treated as a third instance.
 wait_until_settled() {
   local deadline=$((SECONDS + 1800))
-  local pool total active
+  local pool active inflight
   while (( SECONDS < deadline )); do
     pool="$(pool_json)"
-    total="$(jq '.data.nodes | length' <<<"${pool}")"
     active="$(jq '[.data.nodes[] | select(.["lifecycle-state"] == "ACTIVE")] | length' <<<"${pool}")"
-    if (( total > 2 )); then
-      echo "node pool has ${total} nodes; refusing to continue" >&2
+    inflight="$(jq '[.data.nodes[] | select(.["lifecycle-state"] != "ACTIVE" and .["lifecycle-state"] != "DELETED")] | length' <<<"${pool}")"
+    if (( active > 2 )); then
+      echo "node pool has ${active} ACTIVE nodes; refusing to continue" >&2
       exit 1
     fi
-    if (( total == 2 && active == 2 )); then
+    if (( active == 2 && inflight == 0 )); then
       printf '%s\n' "${pool}"
       return 0
     fi
-    echo "waiting for 2 ACTIVE nodes (total=${total} active=${active})" >&2
+    echo "waiting for 2 ACTIVE nodes (active=${active} inflight=${inflight})" >&2
     sleep 20
   done
   echo "node pool did not return to 2 ACTIVE nodes" >&2
@@ -101,7 +103,7 @@ while read -r id; do
   else
     echo "node ${id} already matches"
   fi
-done < <(jq -r '.data.nodes[].id' <<<"${pool}")
+done < <(jq -r '.data.nodes[] | select(.["lifecycle-state"] == "ACTIVE") | .id' <<<"${pool}")
 
 if (( ${#stale[@]} == 0 )); then
   echo "no stale workers"
@@ -146,7 +148,7 @@ for old_id in "${stale[@]}"; do
     --max-wait-seconds 2700
 
   pool="$(wait_until_settled)"
-  if jq -e --arg id "${old_id}" '.data.nodes[] | select(.id == $id)' >/dev/null <<<"${pool}"; then
+  if jq -e --arg id "${old_id}" '.data.nodes[] | select(.id == $id and .["lifecycle-state"] != "DELETED")' >/dev/null <<<"${pool}"; then
     echo "node ${old_id} is still in the pool"
     exit 1
   fi
