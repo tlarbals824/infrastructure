@@ -60,21 +60,23 @@ data:
       exit 1
     fi
 
-    user_code=$(curl -s -o /dev/null -w '%{http_code}' -u "$auth" http://127.0.0.1:5984/_users/org.couchdb.user:livesync)
-    if [ "$user_code" = "404" ]; then
-      curl -fsS -u "$auth" -X PUT http://127.0.0.1:5984/_users/org.couchdb.user:livesync \
-        -H 'Content-Type: application/json' \
-        -d "{\"name\":\"livesync\",\"password\":\"${LIVESYNC_PASSWORD}\",\"roles\":[],\"type\":\"user\"}" >/dev/null
-    elif [ "$user_code" != "200" ]; then
-      echo "livesync user check returned ${user_code}" >&2
-      kill "$pid" || true
-      wait "$pid" || true
-      exit 1
-    fi
+    # _users 에 같은 이름이 있으면 그 계정이 우선해서 서버 설정은 401이 된다.
+    user_doc=$(curl -fsS -u "$auth" http://127.0.0.1:5984/_users/org.couchdb.user:livesync || true)
+    case "$user_doc" in
+      *'"_rev"'*)
+        rev=$(printf '%s' "$user_doc" | sed -n 's/.*"_rev":"\([^"]*\)".*/\1/p')
+        curl -fsS -u "$auth" -X DELETE "http://127.0.0.1:5984/_users/org.couchdb.user:livesync?rev=${rev}" >/dev/null
+        ;;
+    esac
 
     curl -fsS -u "$auth" -X PUT http://127.0.0.1:5984/obsidian/_security \
       -H 'Content-Type: application/json' \
       -d '{"admins":{"names":["livesync"],"roles":[]},"members":{"names":["livesync"],"roles":[]}}' >/dev/null
+
+    # LiveSync 초기 설정이 /_node/_local/_config 를 읽는다. 서버 관리자만 통과한다.
+    curl -fsS -u "$auth" -X PUT http://127.0.0.1:5984/_node/_local/_config/admins/livesync \
+      -H 'Content-Type: application/json' \
+      -d "\"${LIVESYNC_PASSWORD}\"" >/dev/null
 
     wait "$pid"
 ---
